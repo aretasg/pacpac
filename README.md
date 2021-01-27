@@ -1,6 +1,9 @@
 # PaCPaC (Paratope and Clonotype Probing and Clustering)
 
-Python package to probe antibody VH sequences for a paratope/clonotype of interest and/or cluster into groups of similar paratopes/clonotypes
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.4470165.svg)](https://doi.org/10.5281/zenodo.4470165)
+[![License](https://img.shields.io/badge/License-BSD%203--Clause-blue.svg)](https://opensource.org/licenses/BSD-3-Clause)
+
+Python package to probe and cluster antibody VH sequence paratopes and clonotypes
 
 ## Requirements
 * [conda](https://docs.conda.io/en/latest/miniconda.html)
@@ -66,6 +69,18 @@ Written by **Aretas Gaspariunas**. Have a question? You can always ask and I can
 
 ## :apple: Citing
 If you found PaCPaC useful for your work please acknowledge it by citing this repository.
+```
+@software{aretas_gaspariunas_2021_4470165,
+  author       = {Aretas Gaspariunas},
+  title        = {{aretasg/pacpac: PaCPaC - Python package to probe and cluster antibody VH sequence paratopes and clonotypes}},
+  month        = jan,
+  year         = 2021,
+  publisher    = {Zenodo},
+  version      = {v0.1},
+  doi          = {10.5281/zenodo.4470165},
+  url          = {https://doi.org/10.5281/zenodo.4470165}
+}
+```
 
 ## License
 BSD license.
