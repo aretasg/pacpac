@@ -1,0 +1,9 @@
+.DS_Store
+__pycache__
+foo.py
+foo2.py
+get_cdrs.py
+*.egg-info
+.pytest*
+*.ipynb
+*.csv
