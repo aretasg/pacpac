@@ -802,7 +802,16 @@ def cluster(
         [df, nan_df, nan_df2, nan_df3], ignore_index=False, axis=0, sort=False
     )
     df.drop(
-        ["PARATOPE_DICT", "PARATOPE_DICT_NUMBERED", "PARATOPE_DICT_REFORMAT"],
+        [
+            "CDR1_NUMBERING",
+            "CDR2_NUMBERING",
+            "CDR3_NUMBERING",
+            "PARATOPE_DICT",
+            "PARATOPE_DICT_NUMBERED",
+            "PARATOPE_DICT_REFORMAT",
+            "PARATOPE_PROBS",
+            "PARATOPE_PROBS_NUMBERED",
+        ],
         axis=1,
         inplace=True,
     )
@@ -994,6 +1003,9 @@ def probe(
     )
     df.drop(
         [
+            "CDR1_NUMBERING",
+            "CDR2_NUMBERING",
+            "CDR3_NUMBERING",
             "PARATOPE_MATCH",
             "CLONOTYPE_MATCH",
             "PARATOPE_PROBS",
