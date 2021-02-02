@@ -6,14 +6,16 @@
 Python package to probe and cluster antibody VH sequence paratopes and clonotypes
 
 ## Requirements
+* Linux/macOS/Windows (WSL-only)
 * [conda](https://docs.conda.io/en/latest/miniconda.html)
 
 ## :rocket: Installation
 ```bash
 git clone https://github.com/aretasg/pacpac.git
+cd pacpac
 conda env create -f environment.yml
 conda activate pacpac
-pip install ./pacpac
+pip install .
 ```
 
 ## :snake: Example usage

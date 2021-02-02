@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 # Author: Aretas Gaspariunas
 
 from typing import List, Dict, Optional, Union

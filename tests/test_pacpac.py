@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 import unittest
 from pathlib import Path
 
@@ -25,7 +23,7 @@ class pacpac_test(unittest.TestCase):
         df = pacpac.cluster(
             df,
             "VH_AMINO_ACID_SEQUENCE",
-            ignore_cdr_lengths=False,
+            structural_equivalence=False,
         )
 
         self.assertIsInstance(df, pd.DataFrame)
@@ -35,7 +33,7 @@ class pacpac_test(unittest.TestCase):
         df = pacpac.cluster(
             df,
             "VH_AMINO_ACID_SEQUENCE",
-            ignore_cdr_lengths=True,
+            structural_equivalence=True,
         )
 
         self.assertIsInstance(df, pd.DataFrame)
@@ -47,7 +45,7 @@ class pacpac_test(unittest.TestCase):
             TEST_VH_AA_SEQ,
             df,
             "VH_AMINO_ACID_SEQUENCE",
-            ignore_cdr_lengths=False,
+            structural_equivalence=False,
         )
 
         self.assertIsInstance(df, pd.DataFrame)
@@ -60,7 +58,7 @@ class pacpac_test(unittest.TestCase):
             TEST_VH_AA_SEQ,
             df,
             "VH_AMINO_ACID_SEQUENCE",
-            ignore_cdr_lengths=True,
+            structural_equivalence=True,
         )
 
         self.assertIsInstance(df, pd.DataFrame)
