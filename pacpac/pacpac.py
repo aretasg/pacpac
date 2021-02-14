@@ -257,7 +257,8 @@ def check_clonotype(
     target_v_gene: str,
     target_j_gene: str,
     target_vh_cdr3_aa_seq: str,
-    num_extra_residues: Optional[int] = 0,
+    start_cdr: int,
+    end_cdr: int
 ) -> float:
 
     """
@@ -279,12 +280,12 @@ def check_clonotype(
         match_count = sum(
             res1 == res2
             for res1, res2 in zip(
-                probe_vh_cdr3_aa_seq[num_extra_residues : -1 * num_extra_residues],
-                target_vh_cdr3_aa_seq[num_extra_residues : -1 * num_extra_residues],
+                probe_vh_cdr3_aa_seq[start_cdr : end_cdr],
+                target_vh_cdr3_aa_seq[start_cdr : end_cdr],
             )
         )
 
-        sequence_identity = match_count / (probe_cdrh3_len - 2 * num_extra_residues)
+        sequence_identity = match_count / (probe_cdrh3_len - 2 * start_cdr)
 
     return sequence_identity
 
@@ -306,6 +307,10 @@ def cluster_by_clonotype(
     count = 1
     cluster_dict = {}
     assigned_id_list = []
+
+    end_cdr = -1 * num_extra_residues
+    if num_extra_residues == 0:
+        end_cdr = None
 
     for index, vh, jh, cdr3_aa in zip(
         df.index, df[vh_gene_col_name], df[jh_gene_col_name], df[vh_cdr3_aa_col_name]
@@ -330,14 +335,15 @@ def cluster_by_clonotype(
                 jh2,
                 cdr3_aa2,
                 num_extra_residues,
+                end_cdr
             )
             >= identity_threshold
             and index2 not in assigned_id_list
         ]
 
+        assigned_id_list += members
         if len(members) > 1:
             cluster_dict[str(count) + f" (seed: {index})"] = members
-            assigned_id_list += members
             count += 1
 
     return cluster_dict
@@ -655,9 +661,9 @@ def cluster_by_paratope(
             and index2 not in assigned_id_list
         ]
 
+        assigned_id_list += members
         if len(members) > 1:
             cluster_dict[str(count) + f" (seed: {index})"] = members
-            assigned_id_list += members
             count += 1
 
     return cluster_dict
@@ -745,6 +751,10 @@ def cluster(
                 return cluster_no
 
     if perform_clonotyping is True:
+
+        import time
+        start = time.time()
+
         print("Now THIS is clonotype clustering")
         clonotype_cluster_dict = cluster_by_clonotype(
             df,
@@ -758,6 +768,9 @@ def cluster(
             assign_cluster, args=(clonotype_cluster_dict,), axis=1
         )
         print("Your clonotypes are very impressive. You must be very proud")
+
+        end = time.time()
+        print(end - start)
 
     print("Learning to stop worrying and falling in love with the paratope")
     df = parapred_for_df(df, paratope_residue_threshold=paratope_residue_threshold)
@@ -967,6 +980,11 @@ def probe(
     # probing with clonotype
     if perform_clonotyping is True:
         print("We're just clonotypes, sir. We're meant to be expendable")
+
+        end_cdr = -1 * num_extra_residues
+        if num_extra_residues == 0:
+            end_cdr = None
+
         df["CLONOTYPE_MATCH"] = [
             True
             if check_clonotype(
@@ -976,7 +994,8 @@ def probe(
                 vh,
                 jh,
                 cdr3_aa,
-                num_extra_residues=num_extra_residues,
+                num_extra_residues,
+                end_cdr
             )
             >= clonotype_identity_threshold
             else False
