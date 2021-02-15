@@ -752,9 +752,6 @@ def cluster(
 
     if perform_clonotyping is True:
 
-        import time
-        start = time.time()
-
         print("Now THIS is clonotype clustering")
         clonotype_cluster_dict = cluster_by_clonotype(
             df,
@@ -768,9 +765,6 @@ def cluster(
             assign_cluster, args=(clonotype_cluster_dict,), axis=1
         )
         print("Your clonotypes are very impressive. You must be very proud")
-
-        end = time.time()
-        print(end - start)
 
     print("Learning to stop worrying and falling in love with the paratope")
     df = parapred_for_df(df, paratope_residue_threshold=paratope_residue_threshold)
