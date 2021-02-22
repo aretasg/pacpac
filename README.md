@@ -38,10 +38,9 @@ df = pacpac.probe(<probe_vh_amino_acid_sequence>, df, <vh_amino_acid_sequence_co
 * Paratope clustering provides several clustering options.
 
 ### Clustering options
-* If `structural_equivalence` is set to `False` matches paratopes of equal CDR lengths only and assumes that CDRs of the same length always have deletions at the same position - positional equivalence (Richardson et al., 2020). Check e.g. CL-97141 in `Pertussis_SC.csv` in the mentioned publication for outliers to this assumption.
-* When set to `True` structurally equivalence as assigned by IMGT is used i.e. IMGT residue positions are used for residue matching to allow for a comparison at structuraly equivalent positions. Assumes that CDRs of different lengths can still have similar paratopes/binding and assigns additional scores for similar residues using a scoring system as described by Wong et al., 2020. This option usually results in more sequences clustered (default).
+* If `structural_equivalence` is set to `False` matches paratopes of equal CDR lengths only and assumes that CDRs of the same length always have deletions at the same position - positional equivalence (Richardson et al., 2020). Check e.g. CL-97141 in `Pertussis_SC.csv` in the publication supplementary material for outliers to this assumption.
+* When set to `True` structurally equivalence as assigned by the numbering scheme is used (i.e. numbering residue positions are used for residue matching to allow for a comparison at structuraly equivalent positions) and assumes that CDRs of different lengths can still have similar paratopes. Also assigns additional scores for similar residues using residue groupings as described by Wong et al., 2020. This option usually results in more sequences clustered (default).
 * Additionally, when `ignore_paratope_length_differences=False` the number of paratope residue matches is divided by the longer paratope residue count to be more sensitive to paratope residue count mismatches (default).
-* In general, for more sequences clustered set both `structural_equivalence` and `ignore_paratope_length_differences` arguments as `True`.
 
 ## Probing and clustering arguments
 ```python

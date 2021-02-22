@@ -1,6 +1,6 @@
 # Author: Aretas Gaspariunas
 
-from typing import List, Dict, Optional, Union
+from typing import List, Dict, Optional, Iterable, Union
 
 import pandas as pd
 from pandarallel import pandarallel
@@ -71,37 +71,21 @@ def get_sequence_annotations(
     sequence: str,
     allow: Optional[set] = {"H", "K", "L"},
     scheme: Optional[str] = "chothia",
-    cdr1_scheme={"H": range(26, 35), "L": range(24, 35)},
-    cdr2_scheme={"H": range(52, 57), "L": range(50, 57)},
-    cdr3_scheme={"H": range(95, 103), "L": range(89, 98)},
+    cdr1_scheme: Optional[Dict[str, Iterable]] = {"H": range(26, 33), "L": range(24, 35)},
+    cdr2_scheme: Optional[Dict[str, Iterable]] = {"H": range(52, 57), "L": range(50, 57)},
+    cdr3_scheme: Optional[Dict[str, Iterable]] = {"H": range(95, 103), "L": range(89, 98)},
     assign_germline: Optional[bool] = True
-) -> Dict[str, Dict[str, Union[str, List[str]]]]:
+) -> Dict[str, Union[str, int, List[str]]]:
 
     """
     From a VH or VL amino acid sequences returns the three CDR sequences as determined
     from the input numbering (scheme) and the given ranges.
     default ranges are Chothia CDRs.
 
-    For other numbering schemes see also http://www.bioinf.org.uk/abs/#cdrdef
-    Loop    Kabat          AbM    Chothia1    Contact2
-    L1    L24--L34    L24--L34    L24--L34    L30--L36
-    L2    L50--L56    L50--L56    L50--L56    L46--L55
-    L3    L89--L97    L89--L97    L89--L97    L89--L96
-    H1    H31--H35B   H26--H35B   H26--H32..34  H30--H35B
-    H1    H31--H35    H26--H35    H26--H32    H30--H35
-    H2    H50--H65    H50--H58    H52--H56    H47--H58
-    H3    H95--H102   H95--H102   H95--H102   H93--H101
-
-    For generic Chothia identification can set auto_detect_chain_type=True and use:
-    cdr1_scheme={'H': range(26, 35), 'L': range(24, 35)}
-    cdr2_scheme={'H': range(52, 57), 'L': range(50, 57)}
-    cdr3_scheme={'H': range(95, 103), 'L': range(89, 98)}
-
     ============================================================================
     Note:
     * Gracefully stolen and refactored get_cdr_simple() from Parapred source code.
-    * In the original scheme arguments did not account range() last value as being non-inclusive. Added +1 to correct this.
-    * Returns a nested dictionary with numbering scheme positions for each CDR residue and CDR lengths
+    * Returns a dictionary with CDR sequences, numbering scheme positions for each CDR residue and CDR lengths
     """
 
     anarci_output = run_and_parse_anarci(sequence, scheme=scheme, allow=allow, assign_germline=assign_germline)
@@ -123,28 +107,25 @@ def get_sequence_annotations(
     for num_tuple, res in numbering:
         residue_position = str(num_tuple[0]) + num_tuple[1].rstrip()
         if num_tuple[0] in cdr1_scheme:
-            cdr1 += res
             if res != "-":
                 cdr1_numbering.append(residue_position)
+                cdr1 += res
         elif num_tuple[0] in cdr2_scheme:
-            cdr2 += res
             if res != "-":
                 cdr2_numbering.append(residue_position)
+                cdr2 += res
         elif num_tuple[0] in cdr3_scheme:
-            cdr3 += res
             if res != "-":
                 cdr3_numbering.append(residue_position)
+                cdr3 += res
 
     annotation_dict = {
-        "CDR1": cdr1.replace("-", ""),
+        "CDR1": cdr1,
         "CDR1_NUMBERING": cdr1_numbering,
-        "CDR1_LEN": len(cdr1_numbering),
-        "CDR2": cdr2.replace("-", ""),
+        "CDR2": cdr2,
         "CDR2_NUMBERING": cdr2_numbering,
-        "CDR2_LEN": len(cdr2_numbering),
-        "CDR3": cdr3.replace("-", ""),
+        "CDR3": cdr3,
         "CDR3_NUMBERING": cdr3_numbering,
-        "CDR3_LEN": len(cdr3_numbering),
     }
 
     annotation_dict = {**annotation_dict, **anarci_output}
@@ -162,11 +143,42 @@ def get_annotations(
 ) -> Dict[str, str]:
 
     """
-    CDRs prediction for a given VH or VL sequence.
-    Convenience wrapper around get_sequence_annotations() that includes already defined CDR schemes.
+    Annotation and CDRs definition for a given VH or VL sequence.
+    Convenience wrapper around get_sequence_annotations() with defined CDR schemas.
     """
 
-    if cdr_scheme == "north":
+    if cdr_scheme in ('imgt'):
+        scheme = 'imgt'
+    elif cdr_scheme in ('chothia', 'contact') and scheme not in ('chothia', 'martin'):
+        scheme = 'chothia'
+
+    if cdr_scheme == "chothia":
+        cdr1_scheme = {
+            "H": range(26 - num_extra_residues, 33 + num_extra_residues),
+            "L": range(24 - num_extra_residues, 35 + num_extra_residues),
+        }
+        cdr2_scheme = {
+            "H": range(52 - num_extra_residues, 57 + num_extra_residues),
+            "L": range(50 - num_extra_residues, 57 + num_extra_residues),
+        }
+        cdr3_scheme = {
+            "H": range(95 - num_extra_residues, 103 + num_extra_residues),
+            "L": range(89 - num_extra_residues, 98 + num_extra_residues),
+        }
+    elif cdr_scheme == "imgt":
+        cdr1_scheme = {
+            "H": range(27 - num_extra_residues, 39 + num_extra_residues),
+            "L": range(27 - num_extra_residues, 39 + num_extra_residues),
+        }
+        cdr2_scheme = {
+            "H": range(56 - num_extra_residues, 66 + num_extra_residues),
+            "L": range(56 - num_extra_residues, 66 + num_extra_residues),
+        }
+        cdr3_scheme = {
+            "H": range(105 - num_extra_residues, 118 + num_extra_residues),
+            "L": range(105 - num_extra_residues, 118 + num_extra_residues),
+        }
+    elif cdr_scheme == "north" and scheme == "imgt":
         cdr1_scheme = {
             "H": range(24 - num_extra_residues, 41 + num_extra_residues),
             "L": range(24 - num_extra_residues, 41 + num_extra_residues),
@@ -179,18 +191,31 @@ def get_annotations(
             "H": range(105 - num_extra_residues, 118 + num_extra_residues),
             "L": range(105 - num_extra_residues, 118 + num_extra_residues),
         }
-    elif cdr_scheme == "chothia":
+    elif cdr_scheme == "north" and scheme != "imgt":
         cdr1_scheme = {
-            "H": range(26 - num_extra_residues, 35 + num_extra_residues),
-            "L": range(24 - num_extra_residues, 35 + num_extra_residues),
+            "H": range(21 - num_extra_residues, 38 + num_extra_residues),
+            "L": range(22 - num_extra_residues, 37 + num_extra_residues),
         }
         cdr2_scheme = {
-            "H": range(52 - num_extra_residues, 57 + num_extra_residues),
-            "L": range(50 - num_extra_residues, 57 + num_extra_residues),
+            "H": range(49 - num_extra_residues, 61 + num_extra_residues),
+            "L": range(47 - num_extra_residues, 59 + num_extra_residues),
         }
         cdr3_scheme = {
-            "H": range(95 - num_extra_residues, 103 + num_extra_residues),
-            "L": range(89 - num_extra_residues, 98 + num_extra_residues),
+            "H": range(91 - num_extra_residues, 105 + num_extra_residues),
+            "L": range(87 - num_extra_residues, 102 + num_extra_residues),
+        }
+    elif cdr_scheme == "contact":
+        cdr1_scheme = {
+            "H": range(30 - num_extra_residues, 36 + num_extra_residues),
+            "L": range(30 - num_extra_residues, 37 + num_extra_residues),
+        }
+        cdr2_scheme = {
+            "H": range(47 - num_extra_residues, 59 + num_extra_residues),
+            "L": range(46 - num_extra_residues, 56 + num_extra_residues),
+        }
+        cdr3_scheme = {
+            "H": range(93 - num_extra_residues, 102 + num_extra_residues),
+            "L": range(89 - num_extra_residues, 97 + num_extra_residues),
         }
 
     annotations = get_sequence_annotations(
@@ -226,13 +251,10 @@ def annotations_for_df(
             annotations = {
                 "CDR1": None,
                 "CDR1_NUMBERING": None,
-                "CDR1_LEN": None,
                 "CDR2": None,
                 "CDR2_NUMBERING": None,
-                "CDR2_LEN": None,
                 "CDR3": None,
                 "CDR3_NUMBERING": None,
-                "CDR3_LEN": None,
                 "CHAIN_TYPE": None,
                 "IDENTITY_SPECIES": None,
                 "V_GENE": None,
@@ -693,9 +715,12 @@ def cluster(
     vh_aa_sequence_col_name : str
         column name for VH sequences.
     scheme : str, default "imgt"
-        numbering scheme to use.
+        numbering scheme to use. IMGT, Chothia, Martin only.
     cdr_scheme : str, default "north"
-        CDR definition to use. Only North and Chothia supported.
+        CDR definition to use. IMGT, North, Chothia and Contact supported.
+        IMGT, North can be used with IMGT numbering scheme.
+        North, Chothia, Contact can be used with Chothia, Martin numbering schemes.
+        CDR definition with not supported numbering scheme will default to to supported numbering scheme.
     num_extra_residues : int, default 2
         include extra residues at the start and end of each CDR.
     paratope_residue_threshold : float, default 0.67
@@ -705,7 +730,7 @@ def cluster(
     clonotype_identity_threshold : float, default 0.72
         clonotype sequence identity value at which clonotype are considered the same.
     structural_equivalence : bool, default True
-        specify whether positional or structural equivalence as assigned by IMGT should be used.
+        specify whether positional or structural equivalence as assigned by the numbering scheme of choice should be used.
     ignore_paratope_length_differences : bool, default True
         specify whether paratope length mismatches should be taken into an account when calcualting similarity between paratopes.
         Only applicaple if structural_equivalence=True
@@ -738,6 +763,10 @@ def cluster(
     # exclude sequences where anarci has failed
     nan_df2 = df[df["CDR3"].isnull()]
     df = df[df["CDR3"].notnull()]
+
+    df['CDR1_LEN'] = df['CDR1'].astype(str).map(len)
+    df['CDR2_LEN'] = df['CDR2'].astype(str).map(len)
+    df['CDR3_LEN'] = df['CDR3'].astype(str).map(len)
 
     df.sort_values(
         ["CDR3_LEN", "CDR2_LEN", "CDR1_LEN", vh_aa_sequence_col_name],
@@ -856,7 +885,10 @@ def probe(
     scheme : str, default "imgt"
         numbering scheme to use.
     cdr_scheme : str, default "north"
-        CDR definition to use. Only North and Chothia supported.
+        CDR definition to use. IMGT, North, Chothia and Contact supported.
+        IMGT, North can be used with IMGT numbering scheme.
+        North, Chothia, Contact can be used with Chothia, Martin numbering schemes.
+        CDR definition with not supported numbering scheme will default to to supported numbering scheme.
     num_extra_residues : int, default 2
         include extra residues at the start and end of each CDR.
     paratope_residue_threshold : float, default 0.67
@@ -866,7 +898,7 @@ def probe(
     clonotype_identity_threshold : float, default 0.72
         clonotype sequence identity value at which clonotype are considered the same.
     structural_equivalence : bool, default True
-        specify whether positional or structural equivalence as assigned by IMGT should be used.
+        specify whether positional or structural equivalence as assigned by the numbering scheme of choice should be used.
     ignore_paratope_length_differences : bool, default True
         specify whether paratope length mismatches should be taken into an account when calcualting similarity between paratopes.
         Only applicaple if structural_equivalence=True
