@@ -6,6 +6,7 @@ import pandas as pd
 from pandarallel import pandarallel
 from anarci import anarci
 from pyfiglet import figlet_format
+from numba import njit, jit, prange
 
 from pacpac.parapred.parapred import predict_sequence_probabilities as parapred
 
@@ -272,6 +273,7 @@ def annotations_for_df(
     return df
 
 
+@njit(fastmath=True, cache=True)
 def check_clonotype(
     probe_v_gene: str,
     probe_j_gene: str,
@@ -299,13 +301,20 @@ def check_clonotype(
     ):
 
         # inverse hamming distance
-        match_count = sum(
-            res1 == res2
+        # match_count = sum(
+        #     res1 == res2
+        #     for res1, res2 in zip(
+        #         probe_vh_cdr3_aa_seq[start_cdr : end_cdr],
+        #         target_vh_cdr3_aa_seq[start_cdr : end_cdr],
+        #     )
+        # )
+        match_count = len([True
             for res1, res2 in zip(
                 probe_vh_cdr3_aa_seq[start_cdr : end_cdr],
                 target_vh_cdr3_aa_seq[start_cdr : end_cdr],
-            )
+            ) if res1 == res2]
         )
+
 
         sequence_identity = match_count / (probe_cdrh3_len - 2 * start_cdr)
 
@@ -732,7 +741,7 @@ def cluster(
     structural_equivalence : bool, default True
         specify whether positional or structural equivalence as assigned by the numbering scheme of choice should be used.
     ignore_paratope_length_differences : bool, default True
-        specify whether paratope length mismatches should be taken into an account when calcualting similarity between paratopes.
+        specify whether paratope length mismatches should be taken into an account when calculating similarity between paratopes.
         Only applicaple if structural_equivalence=True
     perform_clonotyping : bool, default True
         specify if clonotyping should be performed.
@@ -781,6 +790,8 @@ def cluster(
 
     if perform_clonotyping is True:
 
+        import time
+        start = time.time()
         print("Now THIS is clonotype clustering")
         clonotype_cluster_dict = cluster_by_clonotype(
             df,
@@ -790,6 +801,8 @@ def cluster(
             "CDR3",
             num_extra_residues=num_extra_residues,
         )
+        end = time.time()
+        print(end - start)
         df["CLONOTYPE_CLUSTER"] = df.apply(
             assign_cluster, args=(clonotype_cluster_dict,), axis=1
         )
@@ -900,7 +913,7 @@ def probe(
     structural_equivalence : bool, default True
         specify whether positional or structural equivalence as assigned by the numbering scheme of choice should be used.
     ignore_paratope_length_differences : bool, default True
-        specify whether paratope length mismatches should be taken into an account when calcualting similarity between paratopes.
+        specify whether paratope length mismatches should be taken into an account when calculating similarity between paratopes.
         Only applicaple if structural_equivalence=True
     perform_clonotyping : bool, default True
         specify if clonotyping should be performed.
