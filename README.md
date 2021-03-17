@@ -5,11 +5,11 @@
 
 Python package to probe and cluster antibody VH sequence paratopes and clonotypes
 
-## Requirements
+## :battery: Requirements
 * Linux/macOS/Windows (WSL-only)
 * [conda](https://docs.conda.io/en/latest/miniconda.html)
 
-## :rocket: Installation
+## :hammer_and_wrench: Installation
 ```bash
 git clone https://github.com/aretasg/pacpac.git
 cd pacpac
@@ -38,11 +38,11 @@ df = pacpac.probe(<probe_vh_amino_acid_sequence>, df, <vh_amino_acid_sequence_co
 * Paratope clustering provides several clustering options.
 
 ### Clustering options
-* If `structural_equivalence` is set to `False` matches paratopes of equal CDR lengths only and assumes that CDRs of the same length always have deletions at the same position - positional equivalence (Richardson et al., 2020). Check e.g. CL-97141 in `Pertussis_SC.csv` in the publication supplementary material for outliers to this assumption.
+* If `structural_equivalence` is set to `False` matches paratopes of equal CDR lengths only and assumes that CDRs of the same length always have deletions at the same position - positional equivalence (Richardson et al., 2020). Check e.g. `CL-97141` in `Pertussis_SC.csv` in the publication supplementary material for outliers to this assumption.
 * When set to `True` structurally equivalence as assigned by the numbering scheme is used (i.e. numbering residue positions are used for residue matching to allow for a comparison at structuraly equivalent positions) and assumes that CDRs of different lengths can still have similar paratopes. Also assigns additional scores for similar residues using residue groupings as described by Wong et al., 2020. This option usually results in more sequences clustered (default).
 * Additionally, when `ignore_paratope_length_differences=False` the number of paratope residue matches is divided by the longer paratope residue count to be more sensitive to paratope residue count mismatches (default).
 
-## Probing and clustering arguments
+## :question: Probing and clustering arguments
 ```python
 help(pacpac.cluster)
 help(pacpac.probe)
@@ -53,12 +53,12 @@ help(pacpac.probe)
 | -----------: | ----------------- | :----------: |
 | Annotations using anarci | 378 | parallel execution |
 | Paratope prediction using parapred | 494 | parallel execution without CPU/GPU speed up for TensorFlow |
-| Clonotype clustering | 25 | on amino acid level |
+| Clonotype clustering | 15 | on amino acid level |
 | Paratope clustering | 42 | `structural_equivalence=False` |
 | Paratope clustering | 200 | `structural_equivalence=True` |
 | Probing | <0.1 | clonotype & paratope |
 
-Annotating the data set and running parapred are performence bottlenecks and can be speed up with more cores and/or CPU/GPU speed up for Tensorflow.
+Annotating the data set and running Parapred are performence bottlenecks and can be speed up with more cores and/or CPU/GPU speed up instructions for Tensorflow.
 
 ## :pencil2: Authors
 Written by **Aretas Gaspariunas**. Have a question? You can always ask and I can always ignore.

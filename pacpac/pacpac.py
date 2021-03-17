@@ -1,12 +1,13 @@
 # Author: Aretas Gaspariunas
 
-from typing import List, Dict, Optional, Iterable, Union
+from typing import List, Dict, Tuple, Optional, Iterable, Union
 
 import pandas as pd
 from pandarallel import pandarallel
 from anarci import anarci
 from pyfiglet import figlet_format
-from numba import njit, jit, prange
+import numpy as np
+from numba import njit
 
 from pacpac.parapred.parapred import predict_sequence_probabilities as parapred
 
@@ -273,14 +274,16 @@ def annotations_for_df(
     return df
 
 
-@njit(fastmath=True, cache=True)
+@njit(cache=True)
 def check_clonotype(
     probe_v_gene: str,
     probe_j_gene: str,
-    probe_vh_cdr3_aa_seq: str,
+    probe_cdr3_len: int,
+    probe_cdr3_aa_seq: str,
     target_v_gene: str,
     target_j_gene: str,
-    target_vh_cdr3_aa_seq: str,
+    target_cdr3_len: int,
+    target_cdr3_aa_seq: str,
     start_cdr: int,
     end_cdr: int
 ) -> float:
@@ -293,42 +296,35 @@ def check_clonotype(
 
     sequence_identity = 0
 
-    probe_cdrh3_len = len(probe_vh_cdr3_aa_seq)
     if (
         probe_v_gene == target_v_gene
         and probe_j_gene == target_j_gene
-        and probe_cdrh3_len == len(target_vh_cdr3_aa_seq)
+        and probe_cdr3_len == target_cdr3_len
     ):
 
         # inverse hamming distance
-        # match_count = sum(
-        #     res1 == res2
-        #     for res1, res2 in zip(
-        #         probe_vh_cdr3_aa_seq[start_cdr : end_cdr],
-        #         target_vh_cdr3_aa_seq[start_cdr : end_cdr],
-        #     )
-        # )
         match_count = len([True
             for res1, res2 in zip(
-                probe_vh_cdr3_aa_seq[start_cdr : end_cdr],
-                target_vh_cdr3_aa_seq[start_cdr : end_cdr],
+                probe_cdr3_aa_seq[start_cdr: end_cdr],
+                target_cdr3_aa_seq[start_cdr: end_cdr],
             ) if res1 == res2]
         )
 
-
-        sequence_identity = match_count / (probe_cdrh3_len - 2 * start_cdr)
+        sequence_identity = match_count / (probe_cdr3_len - 2 * start_cdr)
 
     return sequence_identity
 
 
+@njit(cache=True)
 def cluster_by_clonotype(
-    df: pd.DataFrame,
+    index_list: List[int],
+    vh_gene_list: List[str],
+    jh_gene_list: List[str],
+    vh_cdr3_len_list: List[int],
+    vh_cdr3_aa_list: List[str],
     identity_threshold: float,
-    vh_gene_col_name: str,
-    jh_gene_col_name: str,
-    vh_cdr3_aa_col_name: str,
     num_extra_residues: Optional[int] = 0,
-) -> Dict[int, int]:
+) -> Dict[tuple, List[int]]:
 
     """
     Clusters sequences in the dataframe by clonotype using greedy incremental approach.
@@ -336,45 +332,49 @@ def cluster_by_clonotype(
     """
 
     count = 1
-    cluster_dict = {}
-    assigned_id_list = []
+    cluster_dict = dict()
+    k = {(1, 2): np.arange(1), (3, 4): np.arange(2)} # dict types for numba compiler
+    assigned_id_list = [-1] # declaring a list of ints for numba compiler
 
     end_cdr = -1 * num_extra_residues
     if num_extra_residues == 0:
         end_cdr = None
 
-    for index, vh, jh, cdr3_aa in zip(
-        df.index, df[vh_gene_col_name], df[jh_gene_col_name], df[vh_cdr3_aa_col_name]
+    for index, cdr3_len, vh, jh, cdr3_aa in zip(
+        index_list, vh_cdr3_len_list, vh_gene_list, jh_gene_list, vh_cdr3_aa_list
     ):
 
-        if index in assigned_id_list:
+        if index in set(assigned_id_list):
             continue
 
         members = [
             index2
-            for index2, vh2, jh2, cdr3_aa2 in zip(
-                df.index,
-                df[vh_gene_col_name],
-                df[jh_gene_col_name],
-                df[vh_cdr3_aa_col_name],
+            for index2, cdr3_len2, vh2, jh2, cdr3_aa2 in zip(
+                index_list,
+                vh_cdr3_len_list,
+                vh_gene_list,
+                jh_gene_list,
+                vh_cdr3_aa_list
             )
             if check_clonotype(
                 vh,
                 jh,
+                cdr3_len,
                 cdr3_aa,
                 vh2,
                 jh2,
+                cdr3_len2,
                 cdr3_aa2,
                 num_extra_residues,
                 end_cdr
             )
             >= identity_threshold
-            and index2 not in assigned_id_list
+            and index2 not in set(assigned_id_list)
         ]
 
         assigned_id_list += members
         if len(members) > 1:
-            cluster_dict[str(count) + f" (seed: {index})"] = members
+            cluster_dict[(count, index)] = np.array(members)
             count += 1
 
     return cluster_dict
@@ -517,6 +517,7 @@ def paratopes_for_df(
     return df
 
 
+@njit(cache=True)
 def check_paratope_positional(
     probe_cdr1_aa_seq: str,
     probe_cdr2_aa_seq: str,
@@ -535,24 +536,28 @@ def check_paratope_positional(
     """
 
     sequence_identity = 0
+
     if (
         len(probe_cdr1_aa_seq) == len(target_cdr1_aa_seq)
         and len(probe_cdr2_aa_seq) == len(target_cdr2_aa_seq)
         and len(probe_cdr3_aa_seq) == len(target_cdr3_aa_seq)
     ):
 
-        match_count = sum(
-            res_num in target_paratope_dict[cdr]
-            and res == target_paratope_dict[cdr][res_num]
+        match_count = len([True
             for cdr, residue_dict in probe_paratope_dict.items()
             for res_num, res in residue_dict.items()
+            if res_num in target_paratope_dict[cdr]
+            and res == target_paratope_dict[cdr][res_num]
+            ]
         )
 
-        probe_paratope_len = sum(
+        probe_paratope_len = np.sum([
             len(value) for key, value in probe_paratope_dict.items()
+            ]
         )
-        target_paratope_len = sum(
+        target_paratope_len = np.sum([
             len(value) for key, value in target_paratope_dict.items()
+            ]
         )
         sequence_identity = match_count / min(probe_paratope_len, target_paratope_len)
 
@@ -612,8 +617,8 @@ def check_paratope_structural(
                 ):
                     match_count += 0.5
 
-    probe_paratope_len = sum(len(value) for key, value in probe_paratope_dict.items())
-    target_paratope_len = sum(len(value) for key, value in target_paratope_dict.items())
+    probe_paratope_len = np.sum([len(value) for key, value in probe_paratope_dict.items()])
+    target_paratope_len = np.sum([len(value) for key, value in target_paratope_dict.items()])
     if ignore_paratope_length_differences:
         sequence_identity = match_count / min(probe_paratope_len, target_paratope_len)
     else:
@@ -623,15 +628,15 @@ def check_paratope_structural(
 
 
 def cluster_by_paratope(
-    df: pd.DataFrame,
-    cdr1_aa_seq_col_name: str,
-    cdr2_aa_seq_col_name: str,
-    cdr3_aa_seq_col_name: str,
-    paratope_dict_col_name: str,
+    index_list: List[int],
+    cdr1_aa_seq_list: List[str],
+    cdr2_aa_seq_list: List[str],
+    cdr3_aa_seq_list: List[str],
+    paratope_dict_list: Tuple[Dict[str, Dict[str, str]]],
     identity_threshold: float,
     ignore_cdr_lengths: Optional[bool] = False,
     ignore_paratope_length_differences: Optional[bool] = False,
-) -> Dict[int, int]:
+) -> Dict[tuple, List[int]]:
 
     """
     Clusters sequences in the dataframe by paratope using greedy incremental approach.
@@ -654,28 +659,29 @@ def cluster_by_paratope(
         check_paratope = check_paratope_positional
 
     count = 1
-    cluster_dict = {}
-    assigned_id_list = []
+    cluster_dict = dict()
+    k = {(1, 2): np.arange(1), (3, 4): np.arange(2)} # dict types for numba compiler
+    assigned_id_list = [-1] # declaring a list of ints for numba compiler
 
     for index, cdr1, cdr2, cdr3, paratope in zip(
-        df.index,
-        df[cdr1_aa_seq_col_name],
-        df[cdr2_aa_seq_col_name],
-        df[cdr3_aa_seq_col_name],
-        df[paratope_dict_col_name],
+        index_list,
+        cdr1_aa_seq_list,
+        cdr2_aa_seq_list,
+        cdr3_aa_seq_list,
+        paratope_dict_list,
     ):
 
-        if index in assigned_id_list:
+        if index in set(assigned_id_list):
             continue
 
         members = [
             index2
             for index2, cdr1_2, cdr2_2, cdr3_2, paratope2 in zip(
-                df.index,
-                df[cdr1_aa_seq_col_name],
-                df[cdr2_aa_seq_col_name],
-                df[cdr3_aa_seq_col_name],
-                df[paratope_dict_col_name],
+                index_list,
+                cdr1_aa_seq_list,
+                cdr2_aa_seq_list,
+                cdr3_aa_seq_list,
+                paratope_dict_list,
             )
             if check_paratope(
                 cdr1,
@@ -689,12 +695,12 @@ def cluster_by_paratope(
                 ignore_paratope_length_differences,
             )
             >= identity_threshold
-            and index2 not in assigned_id_list
+            and index2 not in set(assigned_id_list)
         ]
 
         assigned_id_list += members
         if len(members) > 1:
-            cluster_dict[str(count) + f" (seed: {index})"] = members
+            cluster_dict[(count, index)] = np.array(members)
             count += 1
 
     return cluster_dict
@@ -786,19 +792,21 @@ def cluster(
     def assign_cluster(row, cluster_dict):
         for cluster_no, sequences in cluster_dict.items():
             if row.name in sequences:
-                return cluster_no
+                return str(cluster_no[0]) + f" (seed: {cluster_no[1]})"
 
     if perform_clonotyping is True:
 
         import time
         start = time.time()
+
         print("Now THIS is clonotype clustering")
         clonotype_cluster_dict = cluster_by_clonotype(
-            df,
+            df.index.tolist(),
+            df["V_GENE"].tolist(),
+            df["J_GENE"].tolist(),
+            df["CDR3_LEN"].tolist(),
+            df["CDR3"].tolist(),
             clonotype_identity_threshold,
-            "V_GENE",
-            "J_GENE",
-            "CDR3",
             num_extra_residues=num_extra_residues,
         )
         end = time.time()
@@ -830,16 +838,21 @@ def cluster(
         for paratope_dict in df[paratope_dict_col]
     ]
 
+    import time
+    start = time.time()
     paratope_cluster_dict = cluster_by_paratope(
-        df,
-        "CDR1",
-        "CDR2",
-        "CDR3",
-        "PARATOPE_DICT_REFORMAT",
+        df.index.tolist(),
+        df["CDR1"].tolist(),
+        df["CDR2"].tolist(),
+        df["CDR3"].tolist(),
+        tuple(df["PARATOPE_DICT_REFORMAT"].tolist()),
         paratope_identity_threshold,
         ignore_cdr_lengths=structural_equivalence,
         ignore_paratope_length_differences=ignore_paratope_length_differences,
     )
+    end = time.time()
+    print(end - start)
+
     df["PARATOPE_CLUSTER"] = df.apply(
         assign_cluster, args=(paratope_cluster_dict,), axis=1
     )
