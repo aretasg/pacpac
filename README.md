@@ -32,7 +32,7 @@ df = pacpac.probe(<probe_vh_amino_acid_sequence>, df, <vh_amino_acid_sequence_co
 * Sequence annotations operations by anarci are parallelized with pandarallel.
 * Deep learning model Parapred for paratope predictions (Liberis et al., 2018).
 * Clusters using greedy incremental approach.
-* Determinism, when clustering, is achieved by sorting the input data set by CDR lengths, paratope length and amino acid sequence in a descending order.
+* Determinism is achieved by sorting the input data set by CDR lengths and paratope length for clonotype and paratope clustering, respectively, and amino acid sequence in a descending order.
 * Each cluster has a representitive sequence as indicated by a keyword `seed`.
 * Clonotyping is done on the amino acid sequence level. Any silent mutations on nucleotide sequence level due to SHM are not taken into an account.
 * Paratope clustering provides several clustering options.
@@ -40,7 +40,7 @@ df = pacpac.probe(<probe_vh_amino_acid_sequence>, df, <vh_amino_acid_sequence_co
 ### Clustering options
 * If `structural_equivalence` is set to `False` matches paratopes of equal CDR lengths only and assumes that CDRs of the same length always have deletions at the same position. Check `CL-97141` in `Pertussis_SC.csv` (IMGT numbering and North CDR definition) in the publication supplementary material for outliers to this assumption (Richardson et al., 2020).
 * When set to `True` structurally equivalence as assigned by the numbering scheme is used (i.e. numbering residue positions are used for residue matching to allow for a comparison at structuraly equivalent positions) and assumes that CDRs of different lengths can have similar paratopes (default).
-* When `structural_equivalence=True` the number of paratope residue matches is divided by the longer paratope residue count to be more sensitive to the paratope residue count mismatches.
+* When `structural_equivalence=True` the number of paratope residue matches is divided by the longer paratope residue count to be penalize to the paratope residue count mismatches i.e. the larger the paratope count difference the larger the penalty.
 
 ## :question: Probing and clustering arguments
 ```python

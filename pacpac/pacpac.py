@@ -264,6 +264,7 @@ def annotations_for_df(
                 row[aa_sequence_col_name],
                 assign_germline=assign_germline,
                 scheme=scheme,
+                cdr_scheme=cdr_scheme,
             )
         except Exception:
             annotations = {
@@ -770,6 +771,16 @@ def cluster(
 
     print(figlet_format("PaCPaC", font="banner"))
 
+    scheme = scheme.lower()
+    if scheme not in ("chothia", "imgt", "martin"):
+        print(f"You don't want to input *{scheme}*. You want to go home and rethink your life")
+        return None
+
+    cdr_scheme = cdr_scheme.lower()
+    if cdr_scheme not in ("chothia", "imgt", "north", "contact"):
+        print(f"You don't want to input *{cdr_scheme}*. You want to go home and rethink your life")
+        return None
+
     # slicing rows with NaN for sequences
     nan_df = df[df[vh_aa_sequence_col_name].isnull()]
     df = df[df[vh_aa_sequence_col_name].notnull()]
@@ -954,13 +965,23 @@ def probe(
 
     print(figlet_format("PaCPaC", font="banner"))
 
+    scheme = scheme.lower()
+    if scheme not in ("chothia", "imgt", "martin"):
+        print(f"You don't want to input *{scheme}*. You want to go home and rethink your life")
+        return None
+
+    cdr_scheme = cdr_scheme.lower()
+    if cdr_scheme not in ("chothia", "imgt", "north", "contact"):
+        print(f"You don't want to input *{cdr_scheme}*. You want to go home and rethink your life")
+        return None
+
     # slicing rows with NaN for sequences
     nan_df = df[df[vh_aa_sequence_col_name].isnull()]
     df = df[df[vh_aa_sequence_col_name].notnull()]
     if not nan_df.empty:
         print("Not to worry, we are still flying half a dataset")
 
-    # create paratope for the probe
+    # annotations for the probe
     annotations = get_annotations(
         probe_sequence,
         assign_germline=perform_clonotyping,
