@@ -30,18 +30,17 @@ df = pacpac.probe(<probe_vh_amino_acid_sequence>, df, <vh_amino_acid_sequence_co
 
 ## :gem: Features
 * Sequence annotations operations by anarci are parallelized with pandarallel.
-* Deep learning model Parapred (Liberis et al., 2018) for paratope predictions.
+* Deep learning model Parapred for paratope predictions (Liberis et al., 2018).
 * Clusters using greedy incremental approach.
-* Determinism, when clustering, is achieved by sorting the input data set by CDR lengths and amino acid sequence in a descending order.
+* Determinism, when clustering, is achieved by sorting the input data set by CDR lengths, paratope length and amino acid sequence in a descending order.
 * Each cluster has a representitive sequence as indicated by a keyword `seed`.
 * Clonotyping is done on the amino acid sequence level. Any silent mutations on nucleotide sequence level due to SHM are not taken into an account.
 * Paratope clustering provides several clustering options.
 
 ### Clustering options
-* If `structural_equivalence` is set to `False` matches paratopes of equal CDR lengths only and assumes that CDRs of the same length always have deletions at the same position - positional equivalence (Richardson et al., 2020). Check `CL-97141` in `Pertussis_SC.csv` (IMGT numbering and North CDR definition) in the publication supplementary material for outliers to this assumption.
-* When set to `True` structurally equivalence as assigned by the numbering scheme is used (i.e. numbering residue positions are used for residue matching to allow for a comparison at structuraly equivalent positions) and assumes that CDRs of different lengths can still have similar paratopes (default).
-* Assign additional scores for similar residues using residue groupings as described by Wong et al., 2020 `residue_similarity=True` (default). Applicable only when `structural_equivalence=True`.
-* Additionally, when `ignore_paratope_length_differences=False` the number of paratope residue matches is divided by the longer paratope residue count to be more sensitive to paratope residue count mismatches (default).
+* If `structural_equivalence` is set to `False` matches paratopes of equal CDR lengths only and assumes that CDRs of the same length always have deletions at the same position. Check `CL-97141` in `Pertussis_SC.csv` (IMGT numbering and North CDR definition) in the publication supplementary material for outliers to this assumption (Richardson et al., 2020).
+* When set to `True` structurally equivalence as assigned by the numbering scheme is used (i.e. numbering residue positions are used for residue matching to allow for a comparison at structuraly equivalent positions) and assumes that CDRs of different lengths can have similar paratopes (default).
+* When `structural_equivalence=True` the number of paratope residue matches is divided by the longer paratope residue count to be more sensitive to the paratope residue count mismatches.
 
 ## :question: Probing and clustering arguments
 ```python
@@ -56,7 +55,7 @@ help(pacpac.probe)
 | Paratope prediction using parapred | 494 | parallel execution without CPU/GPU speed up for TensorFlow |
 | Clonotype clustering | 13 | on amino acid level |
 | Paratope clustering | 13 | `structural_equivalence=False` |
-| Paratope clustering | 177 | `structural_equivalence=True` |
+| Paratope clustering | 130 | `structural_equivalence=True` |
 | Probing | <0.1 | clonotype & paratope |
 
 Annotating the data set and running Parapred are performence bottlenecks and can be speed up with more cores and/or CPU/GPU speed up instructions for Tensorflow.
@@ -67,7 +66,6 @@ Written by **Aretas Gaspariunas**. Have a question? You can always ask and I can
 ## References
 - Liberis et al., 2018
 - Richardson et al., 2020
-- Wong et al., 2020
 
 ## :apple: Citing
 If you found PaCPaC useful for your work please acknowledge it by citing this repository.

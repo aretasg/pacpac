@@ -1,6 +1,6 @@
 # Author: Aretas Gaspariunas
 
-from typing import List, Dict, Tuple, Optional, Iterable, Union
+from typing import List, Dict, Optional, Iterable, Union, Callable
 
 import pandas as pd
 from pandarallel import pandarallel
@@ -32,7 +32,7 @@ def run_and_parse_anarci(
     sequence: str,
     allow: Optional[set] = {"H", "K", "L"},
     scheme: Optional[str] = "imgt",
-    assign_germline: Optional[bool] = True
+    assign_germline: Optional[bool] = True,
 ) -> Dict[str, str]:
 
     """
@@ -74,10 +74,19 @@ def get_sequence_annotations(
     sequence: str,
     allow: Optional[set] = {"H", "K", "L"},
     scheme: Optional[str] = "chothia",
-    cdr1_scheme: Optional[Dict[str, Iterable]] = {"H": range(26, 33), "L": range(24, 35)},
-    cdr2_scheme: Optional[Dict[str, Iterable]] = {"H": range(52, 57), "L": range(50, 57)},
-    cdr3_scheme: Optional[Dict[str, Iterable]] = {"H": range(95, 103), "L": range(89, 98)},
-    assign_germline: Optional[bool] = True
+    cdr1_scheme: Optional[Dict[str, Iterable]] = {
+        "H": range(26, 33),
+        "L": range(24, 35),
+    },
+    cdr2_scheme: Optional[Dict[str, Iterable]] = {
+        "H": range(52, 57),
+        "L": range(50, 57),
+    },
+    cdr3_scheme: Optional[Dict[str, Iterable]] = {
+        "H": range(95, 103),
+        "L": range(89, 98),
+    },
+    assign_germline: Optional[bool] = True,
 ) -> Dict[str, Union[str, int, List[str]]]:
 
     """
@@ -91,7 +100,9 @@ def get_sequence_annotations(
     * Returns a dictionary with CDR sequences, numbering scheme positions for each CDR residue and CDR lengths
     """
 
-    anarci_output = run_and_parse_anarci(sequence, scheme=scheme, allow=allow, assign_germline=assign_germline)
+    anarci_output = run_and_parse_anarci(
+        sequence, scheme=scheme, allow=allow, assign_germline=assign_germline
+    )
     numbering = anarci_output["NUMBERING"]  # numbering starts with 1 and not 0
     chain_type = anarci_output["CHAIN_TYPE"]
 
@@ -140,8 +151,8 @@ def get_sequence_annotations(
 def get_annotations(
     sequence: str,
     assign_germline: Optional[bool] = True,
-    scheme: Optional[str] = "imgt",
-    cdr_scheme: Optional[str] = "north",
+    scheme: Optional[str] = "chothia",
+    cdr_scheme: Optional[str] = "chothia",
     num_extra_residues: Optional[int] = 2,
 ) -> Dict[str, str]:
 
@@ -150,10 +161,10 @@ def get_annotations(
     Convenience wrapper around get_sequence_annotations() with defined CDR schemas.
     """
 
-    if cdr_scheme in ('imgt'):
-        scheme = 'imgt'
-    elif cdr_scheme in ('chothia', 'contact') and scheme not in ('chothia', 'martin'):
-        scheme = 'chothia'
+    if cdr_scheme in ("imgt"):
+        scheme = "imgt"
+    elif cdr_scheme in ("chothia", "contact") and scheme not in ("chothia", "martin"):
+        scheme = "chothia"
 
     if cdr_scheme == "chothia":
         cdr1_scheme = {
@@ -227,7 +238,7 @@ def get_annotations(
         cdr1_scheme=cdr1_scheme,
         cdr2_scheme=cdr2_scheme,
         cdr3_scheme=cdr3_scheme,
-        assign_germline=assign_germline
+        assign_germline=assign_germline,
     )
 
     return annotations
@@ -237,8 +248,8 @@ def annotations_for_df(
     df: pd.DataFrame,
     aa_sequence_col_name: str,
     assign_germline: Optional[bool] = True,
-    scheme: Optional[str] = "imgt",
-    cdr_scheme: Optional[str] = "north",
+    scheme: Optional[str] = "chothia",
+    cdr_scheme: Optional[str] = "chothia",
     num_extra_residues: Optional[int] = 2,
 ) -> pd.DataFrame:
 
@@ -249,7 +260,11 @@ def annotations_for_df(
     def assign_annotations(row):
 
         try:
-            annotations = get_annotations(row[aa_sequence_col_name], assign_germline=assign_germline, scheme=scheme)
+            annotations = get_annotations(
+                row[aa_sequence_col_name],
+                assign_germline=assign_germline,
+                scheme=scheme,
+            )
         except Exception:
             annotations = {
                 "CDR1": None,
@@ -286,7 +301,7 @@ def check_clonotype(
     target_cdr3_len: int,
     target_cdr3_aa_seq: str,
     start_cdr: int,
-    end_cdr: int
+    end_cdr: int,
 ) -> float:
 
     """
@@ -304,11 +319,15 @@ def check_clonotype(
     ):
 
         # inverse hamming distance
-        match_count = len([True
-            for res1, res2 in zip(
-                probe_cdr3_aa_seq[start_cdr: end_cdr],
-                target_cdr3_aa_seq[start_cdr: end_cdr],
-            ) if res1 == res2]
+        match_count = len(
+            [
+                True
+                for res1, res2 in zip(
+                    probe_cdr3_aa_seq[start_cdr:end_cdr],
+                    target_cdr3_aa_seq[start_cdr:end_cdr],
+                )
+                if res1 == res2
+            ]
         )
 
         sequence_identity = match_count / (probe_cdr3_len - 2 * start_cdr)
@@ -334,8 +353,8 @@ def cluster_by_clonotype(
 
     count = 1
     cluster_dict = dict()
-    k = {(1, 2): np.arange(1), (3, 4): np.arange(2)} # dict types for numba compiler
-    assigned_id_list = [-1] # declaring a list of ints for numba compiler
+    k = {(1, 2): np.arange(1), (3, 4): np.arange(2)}  # dict types for numba compiler
+    assigned_id_list = [-1]  # declaring a list of ints for numba compiler
 
     end_cdr = -1 * num_extra_residues
     if num_extra_residues == 0:
@@ -355,7 +374,7 @@ def cluster_by_clonotype(
                 vh_cdr3_len_list,
                 vh_gene_list,
                 jh_gene_list,
-                vh_cdr3_aa_list
+                vh_cdr3_aa_list,
             )
             if check_clonotype(
                 vh,
@@ -367,7 +386,7 @@ def cluster_by_clonotype(
                 cdr3_len2,
                 cdr3_aa2,
                 num_extra_residues,
-                end_cdr
+                end_cdr,
             )
             >= identity_threshold
             and index2 not in set(assigned_id_list)
@@ -474,12 +493,16 @@ def parapred_for_df(
     def run_parapred(cdr1, cdr2, cdr3, threshold=paratope_residue_threshold):
 
         try:
-            prob_dict = get_paratope_probabilities({"CDR1": cdr1, "CDR2": cdr2, "CDR3": cdr3})
+            prob_dict = get_paratope_probabilities(
+                {"CDR1": cdr1, "CDR2": cdr2, "CDR3": cdr3}
+            )
         except Exception:
             prob_dict = None
         return prob_dict
 
-    df["PARATOPE_PROBS"] = df[["CDR1", "CDR2", "CDR3"]].apply(lambda x: run_parapred(*x), axis=1)
+    df["PARATOPE_PROBS"] = df[["CDR1", "CDR2", "CDR3"]].apply(
+        lambda x: run_parapred(*x), axis=1
+    )
 
     return df
 
@@ -496,15 +519,16 @@ def paratopes_for_df(
 
         try:
             prob_dict_numbered = apply_numbering_scheme_positions(
-                row['PARATOPE_PROBS'], row[["CDR1_NUMBERING", "CDR2_NUMBERING", "CDR3_NUMBERING"]]
+                row["PARATOPE_PROBS"],
+                row[["CDR1_NUMBERING", "CDR2_NUMBERING", "CDR3_NUMBERING"]],
             )
             paratope_dict = apply_paratope_prediction_threshold(
-                row['PARATOPE_PROBS'], paratope_residue_threshold
+                row["PARATOPE_PROBS"], paratope_residue_threshold
             )
             paratope_dict_numbered = apply_paratope_prediction_threshold(
                 prob_dict_numbered, paratope_residue_threshold
             )
-            paratope = get_paratope_string(row['PARATOPE_PROBS'], threshold)
+            paratope = get_paratope_string(row["PARATOPE_PROBS"], threshold)
         except Exception:
             prob_dict_numbered = None
             paratope_dict = None
@@ -513,13 +537,18 @@ def paratopes_for_df(
 
         return prob_dict_numbered, paratope_dict, paratope_dict_numbered, paratope
 
-    df["PARATOPE_PROBS_NUMBERED"],  df["PARATOPE_DICT"], df["PARATOPE_DICT_NUMBERED"], df["PARATOPE"] = zip(*df.parallel_apply(reformat_parapred_output, axis=1))
+    (
+        df["PARATOPE_PROBS_NUMBERED"],
+        df["PARATOPE_DICT"],
+        df["PARATOPE_DICT_NUMBERED"],
+        df["PARATOPE"],
+    ) = zip(*df.parallel_apply(reformat_parapred_output, axis=1))
 
     return df
 
 
 @njit(cache=True)
-def check_paratope_positional(
+def check_paratope_equal_len_cdrs(
     probe_cdr1_aa_seq: str,
     probe_cdr2_aa_seq: str,
     probe_cdr3_aa_seq: str,
@@ -530,14 +559,12 @@ def check_paratope_positional(
     target_cdr3_aa_seq: str,
     target_paratope_len: int,
     target_paratope_dict: Dict[str, Dict[str, str]],
-    ignore_paratope_length_differences: Optional[bool] = False,
-    residue_similarity: Optional[bool] = True,
 ) -> float:
 
     """
-    Compares two sequences to check for paratope similarity using positional equivalence.
+    Compares two sequences to check for paratope similarity.
     Matches sequences only with the same CDR lengths.
-    Residue postions are used as provided by Parapred
+    Residue postions are used as provided by Parapred.
     Returns sequence identity between the two paratopes.
     """
 
@@ -549,11 +576,13 @@ def check_paratope_positional(
         and len(probe_cdr3_aa_seq) == len(target_cdr3_aa_seq)
     ):
 
-        match_count = len([True
-            for cdr, residue_dict in probe_paratope_dict.items()
-            for res_num, res in residue_dict.items()
-            if res_num in target_paratope_dict[cdr]
-            and res == target_paratope_dict[cdr][res_num]
+        match_count = len(
+            [
+                True
+                for cdr, residue_dict in probe_paratope_dict.items()
+                for res_num, res in residue_dict.items()
+                if res_num in target_paratope_dict[cdr]
+                and res == target_paratope_dict[cdr][res_num]
             ]
         )
 
@@ -574,57 +603,27 @@ def check_paratope_structural(
     target_cdr3_aa_seq: str,
     target_paratope_len: int,
     target_paratope_dict: Dict[str, Dict[str, str]],
-    ignore_paratope_length_differences: Optional[bool] = False,
-    residue_similarity: Optional[bool] = True,
 ) -> float:
 
     """
     Compares two sequences to check for paratope similarity using structural equivalence.
-    Uses structural equivalence provided by the numbering scheme and compares different lenght CDRs.
-    Also assigns scores for similar residues when calculating sequence identity.
+    Uses structural equivalence provided by the numbering scheme and compares different length CDRs.
+    Divides the the number of paratope matches by the longer paratope to be
+        more sensitive to paratope residue count mismatches.
     Returns sequence identity between the two paratopes.
     """
 
-    residue_type_dict = {
-        "G": "small",
-        "A": "small",
-        "S": "nucleophilic",
-        "T": "nucleophilic",
-        "C": "nucleophilic",
-        "V": "hydrophobic",
-        "L": "hydrophobic",
-        "I": "hydrophobic",
-        "M": "hydrophobic",
-        "P": "hydrophobic",
-        "F": "aromatic",
-        "W": "aromatic",
-        "Y": "aromatic",
-        "D": "acidic",
-        "E": "acidic",
-        "N": "amine",
-        "Q": "amine",
-        "K": "basic",
-        "H": "basic",
-        "R": "basic",
-    }
+    match_count = len(
+        [
+            True
+            for cdr, residue_dict in probe_paratope_dict.items()
+            for res_num, res in residue_dict.items()
+            if res_num in target_paratope_dict[cdr]
+            and res == target_paratope_dict[cdr][res_num]
+        ]
+    )
 
-    # counting for residue matches in the paratope
-    match_count = 0
-    for cdr, residue_dict in probe_paratope_dict.items():
-        for res_num, res in residue_dict.items():
-            if res_num in target_paratope_dict[cdr]:
-                if res == target_paratope_dict[cdr][res_num]:
-                    match_count += 1
-                elif (residue_similarity == True and
-                    residue_type_dict[res]
-                    == residue_type_dict[target_paratope_dict[cdr][res_num]]
-                ):
-                    match_count += 0.5
-
-    if ignore_paratope_length_differences:
-        sequence_identity = match_count / min(probe_paratope_len, target_paratope_len)
-    else:
-        sequence_identity = match_count / max(probe_paratope_len, target_paratope_len)
+    sequence_identity = match_count / max(probe_paratope_len, target_paratope_len)
 
     return sequence_identity
 
@@ -636,25 +635,19 @@ def cluster_by_paratope(
     cdr2_aa_seq_list: List[str],
     cdr3_aa_seq_list: List[str],
     paratope_len_list: List[int],
-    paratope_dict_list: Tuple[Dict[str, Dict[str, str]]],
+    paratope_dict_list: List[Dict[str, Dict[str, str]]],
     identity_threshold: float,
-    ignore_paratope_length_differences: Optional[bool] = False,
-    residue_similarity: Optional[bool] = True,
-    check_paratope=check_paratope_structural
+    check_paratope: Optional[Callable] = check_paratope_structural,
 ) -> Dict[tuple, List[int]]:
 
     """
     Clusters sequences in the dataframe by paratope using greedy incremental approach.
-
-    ignore_paratope_length_differences = False, divides the the number of paratope
-    matches by the longer paratope (versus shorter paratope as in the to the original implementation).
-    More sensitive to paratope residue count mismatches.
     """
 
     count = 1
     cluster_dict = dict()
-    k = {(1, 2): np.arange(1), (3, 4): np.arange(2)} # dict types for numba compiler
-    assigned_id_list = [-1] # declaring a list of ints for numba compiler
+    k = {(1, 2): np.arange(1), (3, 4): np.arange(2)}  # dict types for numba compiler
+    assigned_id_list = [-1]  # declaring a list of ints for numba compiler
 
     for index, cdr1, cdr2, cdr3, paratope_len, paratope in zip(
         index_list,
@@ -689,8 +682,6 @@ def cluster_by_paratope(
                 cdr3_2,
                 paratope_len2,
                 paratope2,
-                ignore_paratope_length_differences,
-                residue_similarity
             )
             >= identity_threshold
             and index2 not in set(assigned_id_list)
@@ -739,8 +730,6 @@ def cluster(
     paratope_identity_threshold: Optional[float] = 0.75,
     clonotype_identity_threshold: Optional[float] = 0.72,
     structural_equivalence: Optional[bool] = True,
-    residue_similarity: Optional[bool] = True,
-    ignore_paratope_length_differences: Optional[bool] = False,
     perform_clonotyping: Optional[bool] = True,
 ) -> pd.DataFrame:
 
@@ -753,9 +742,9 @@ def cluster(
         pandas dataframe to cluster.
     vh_aa_sequence_col_name : str
         column name for VH sequences.
-    scheme : str, default "imgt"
+    scheme : str, default "chothia"
         numbering scheme to use. IMGT, Chothia, Martin only.
-    cdr_scheme : str, default "north"
+    cdr_scheme : str, default "chothia"
         CDR definition to use. IMGT, North, Chothia and Contact supported.
         IMGT, North can be used with IMGT numbering scheme.
         North, Chothia, Contact can be used with Chothia, Martin numbering schemes.
@@ -769,13 +758,8 @@ def cluster(
     clonotype_identity_threshold : float, default 0.72
         clonotype sequence identity value at which clonotype are considered the same.
     structural_equivalence : bool, default True
-        specify whether positional or structural equivalence as assigned by the numbering scheme of choice should be used.
-    residue_similarity : bool, default True
-        Assign additional scores for similar residues using residue groupings as described by Wong et al., 2020.
-        Applicable only when `structural_equivalence=True`.
-    ignore_paratope_length_differences : bool, default True
-        specify whether paratope length mismatches should be taken into an account when calculating similarity between paratopes.
-        Only applicaple if structural_equivalence=True
+        specify whether structural equivalence as assigned by the numbering scheme of
+            choice should be used and paratopes with different CDR lengths should be compared.
     perform_clonotyping : bool, default True
         specify if clonotyping should be performed.
 
@@ -806,9 +790,9 @@ def cluster(
     nan_df2 = df[df["CDR3"].isnull()]
     df = df[df["CDR3"].notnull()]
 
-    df['CDR1_LEN'] = df['CDR1'].astype(str).map(len)
-    df['CDR2_LEN'] = df['CDR2'].astype(str).map(len)
-    df['CDR3_LEN'] = df['CDR3'].astype(str).map(len)
+    df["CDR1_LEN"] = df["CDR1"].astype(str).map(len)
+    df["CDR2_LEN"] = df["CDR2"].astype(str).map(len)
+    df["CDR3_LEN"] = df["CDR3"].astype(str).map(len)
 
     df.sort_values(
         ["CDR3_LEN", "CDR2_LEN", "CDR1_LEN", vh_aa_sequence_col_name],
@@ -823,9 +807,6 @@ def cluster(
 
     if perform_clonotyping is True:
 
-        import time
-        start = time.time()
-
         print("Now THIS is clonotype clustering")
         clonotype_cluster_dict = cluster_by_clonotype(
             df.index.tolist(),
@@ -836,8 +817,6 @@ def cluster(
             clonotype_identity_threshold,
             num_extra_residues=num_extra_residues,
         )
-        end = time.time()
-        print(end - start)
         df["CLONOTYPE_CLUSTER"] = df.apply(
             assign_cluster, args=(clonotype_cluster_dict,), axis=1
         )
@@ -864,17 +843,20 @@ def cluster(
         }
         for paratope_dict in df[paratope_dict_col]
     ]
-    df["PARATOPE_DICT_REFORMAT"] = [convert_to_typed_numba_dict(paratope_dict) for paratope_dict in df["PARATOPE_DICT_REFORMAT"]]
-    df["PARATOPE_LEN"] = [sum(len(res_dict) for cdr, res_dict in paratope_dict.items()) for paratope_dict in df["PARATOPE_DICT_REFORMAT"]]
+    df["PARATOPE_DICT_REFORMAT"] = [
+        convert_to_typed_numba_dict(paratope_dict)
+        for paratope_dict in df["PARATOPE_DICT_REFORMAT"]
+    ]
+    df["PARATOPE_LEN"] = [
+        sum(len(res_dict) for cdr, res_dict in paratope_dict.items())
+        for paratope_dict in df["PARATOPE_DICT_REFORMAT"]
+    ]
 
     df.sort_values(
         ["PARATOPE_LEN", vh_aa_sequence_col_name],
         ascending=False,
         inplace=True,
     )
-
-    import time
-    start = time.time()
 
     paratope_cluster_dict = cluster_by_paratope(
         df.index.tolist(),
@@ -884,11 +866,11 @@ def cluster(
         df["PARATOPE_LEN"].tolist(),
         df["PARATOPE_DICT_REFORMAT"].tolist(),
         paratope_identity_threshold,
-        ignore_paratope_length_differences=ignore_paratope_length_differences,
-        check_paratope={False: check_paratope_positional, True: check_paratope_structural}[structural_equivalence],
+        check_paratope={
+            False: check_paratope_equal_len_cdrs,
+            True: check_paratope_structural,
+        }[structural_equivalence],
     )
-    end = time.time()
-    print(end - start)
 
     df["PARATOPE_CLUSTER"] = df.apply(
         assign_cluster, args=(paratope_cluster_dict,), axis=1
@@ -930,8 +912,6 @@ def probe(
     paratope_identity_threshold: Optional[float] = 0.75,
     clonotype_identity_threshold: Optional[float] = 0.72,
     structural_equivalence: Optional[bool] = True,
-    residue_similarity: Optional[bool] = True,
-    ignore_paratope_length_differences: Optional[bool] = False,
     perform_clonotyping: Optional[bool] = True,
 ) -> pd.DataFrame:
 
@@ -946,9 +926,9 @@ def probe(
         pandas dataframe to cluster.
     vh_aa_sequence_col_name : str
         column name for VH sequences.
-    scheme : str, default "imgt"
+    scheme : str, default "chothia"
         numbering scheme to use.
-    cdr_scheme : str, default "north"
+    cdr_scheme : str, default "chothia"
         CDR definition to use. IMGT, North, Chothia and Contact supported.
         IMGT, North can be used with IMGT numbering scheme.
         North, Chothia, Contact can be used with Chothia, Martin numbering schemes.
@@ -962,13 +942,8 @@ def probe(
     clonotype_identity_threshold : float, default 0.72
         clonotype sequence identity value at which clonotype are considered the same.
     structural_equivalence : bool, default True
-        specify whether positional or structural equivalence as assigned by the numbering scheme of choice should be used.
-    residue_similarity : bool, default True
-        Assign additional scores for similar residues using residue groupings as described by Wong et al., 2020.
-        Applicable only when `structural_equivalence=True`.
-    ignore_paratope_length_differences : bool, default True
-        specify whether paratope length mismatches should be taken into an account when calculating similarity between paratopes.
-        Only applicaple if structural_equivalence=True
+        specify whether structural equivalence as assigned by the numbering scheme of
+            choice should be used and paratopes with different CDR lengths should be compared.
     perform_clonotyping : bool, default True
         specify if clonotyping should be performed.
 
@@ -1008,8 +983,12 @@ def probe(
         cdr: {str(residue[0]): residue[1] for residue in value}
         for cdr, value in annotations[paratope_dict_col].items()
     }
-    annotations["PARATOPE_DICT_REFORMAT"] = convert_to_typed_numba_dict(annotations["PARATOPE_DICT_REFORMAT"])
-    annotations["PARATOPE_LEN"] = sum(len(res_dict) for cdr, res_dict in annotations["PARATOPE_DICT_REFORMAT"].items())
+    annotations["PARATOPE_DICT_REFORMAT"] = convert_to_typed_numba_dict(
+        annotations["PARATOPE_DICT_REFORMAT"]
+    )
+    annotations["PARATOPE_LEN"] = sum(
+        len(res_dict) for cdr, res_dict in annotations["PARATOPE_DICT_REFORMAT"].items()
+    )
     probe_dict = annotations
 
     # annotate sequences with genes and cdrs
@@ -1026,9 +1005,9 @@ def probe(
     nan_df2 = df[df["CDR3"].isnull()]
     df = df[df["CDR3"].notnull()]
 
-    df['CDR1_LEN'] = df['CDR1'].astype(str).map(len)
-    df['CDR2_LEN'] = df['CDR2'].astype(str).map(len)
-    df['CDR3_LEN'] = df['CDR3'].astype(str).map(len)
+    df["CDR1_LEN"] = df["CDR1"].astype(str).map(len)
+    df["CDR2_LEN"] = df["CDR2"].astype(str).map(len)
+    df["CDR3_LEN"] = df["CDR3"].astype(str).map(len)
 
     # create paratopes for sequences in df
     print("Learning to stop worrying and falling in love with the paratope")
@@ -1047,8 +1026,14 @@ def probe(
         }
         for paratope_dict in df[paratope_dict_col]
     ]
-    df["PARATOPE_DICT_REFORMAT"] = [convert_to_typed_numba_dict(paratope_dict) for paratope_dict in df["PARATOPE_DICT_REFORMAT"]]
-    df["PARATOPE_LEN"] = [sum(len(res_dict) for cdr, res_dict in paratope_dict.items()) for paratope_dict in df["PARATOPE_DICT_REFORMAT"]]
+    df["PARATOPE_DICT_REFORMAT"] = [
+        convert_to_typed_numba_dict(paratope_dict)
+        for paratope_dict in df["PARATOPE_DICT_REFORMAT"]
+    ]
+    df["PARATOPE_LEN"] = [
+        sum(len(res_dict) for cdr, res_dict in paratope_dict.items())
+        for paratope_dict in df["PARATOPE_DICT_REFORMAT"]
+    ]
 
     df.sort_values(
         ["PARATOPE_LEN", vh_aa_sequence_col_name],
@@ -1060,7 +1045,7 @@ def probe(
     if structural_equivalence is True:
         check_paratope = check_paratope_structural
     else:
-        check_paratope = check_paratope_positional
+        check_paratope = check_paratope_equal_len_cdrs
 
     # probing with paratope
     print("This is where the paratope probing begins")
@@ -1077,13 +1062,15 @@ def probe(
             cdr3,
             paratope_len,
             paratope,
-            ignore_paratope_length_differences=ignore_paratope_length_differences,
-            residue_similarity=residue_similarity,
         )
         >= paratope_identity_threshold
         else False
         for cdr1, cdr2, cdr3, paratope_len, paratope in zip(
-            df["CDR1"], df["CDR2"], df["CDR3"], df["PARATOPE_LEN"], df["PARATOPE_DICT_REFORMAT"]
+            df["CDR1"],
+            df["CDR2"],
+            df["CDR3"],
+            df["PARATOPE_LEN"],
+            df["PARATOPE_DICT_REFORMAT"],
         )
     ]
 
@@ -1107,11 +1094,13 @@ def probe(
                 cdr3_len,
                 cdr3_aa,
                 num_extra_residues,
-                end_cdr
+                end_cdr,
             )
             >= clonotype_identity_threshold
             else False
-            for vh, jh, cdr3_len, cdr3_aa in zip(df["V_GENE"], df["J_GENE"], df["CDR3_LEN"], df["CDR3"])
+            for vh, jh, cdr3_len, cdr3_aa in zip(
+                df["V_GENE"], df["J_GENE"], df["CDR3_LEN"], df["CDR3"]
+            )
         ]
     else:
         df["CLONOTYPE_MATCH"] = None
