@@ -38,9 +38,9 @@ df = pacpac.probe(<probe_vh_amino_acid_sequence>, df, <vh_amino_acid_sequence_co
 * Paratope clustering provides several clustering options.
 
 ### Clustering options
-* If `structural_equivalence` is set to `False` matches paratopes of equal CDR lengths only and assumes that CDRs of the same length always have deletions at the same position. Check `CL-97141` in `Pertussis_SC.csv` (IMGT numbering and North CDR definition) in the publication supplementary material for outliers to this assumption (Richardson et al., 2020).
-* When set to `True` structurally equivalence as assigned by the numbering scheme is used (i.e. numbering residue positions are used for residue matching to allow for a comparison at structuraly equivalent positions) and assumes that CDRs of different lengths can have similar paratopes (default).
-* When `structural_equivalence=True` the number of paratope residue matches is divided by the longer paratope residue count to be penalize to the paratope residue count mismatches i.e. the larger the paratope count difference the larger the penalty.
+* If `structural_equivalence` is set to `False` matches paratopes of equal CDR lengths only and assumes that CDRs of the same length always have deletions at the same position. Check `CL-97141` in `Pertussis_SC.csv` (IMGT numbering and North CDR definition) in the publication supplementary material for outliers to this assumption (Richardson et al., 2020). Useful in detection of very similar paratopes.
+* When set to `True` structurally equivalence as assigned by the numbering scheme is used (i.e. numbering residue positions are used for residue matching to allow for a comparison at structuraly equivalent positions) and assumes that CDRs of different lengths can have similar paratopes (default). Useful in detection of similar binding modes.
+* When `structural_equivalence=True` the number of paratope residue matches is divided by the longer paratope residue count to penalize the paratope residue count mismatches i.e. the larger the paratope count difference the larger the penalty.
 
 ## :question: Probing and clustering arguments
 ```python

@@ -90,14 +90,14 @@ def get_sequence_annotations(
 ) -> Dict[str, Union[str, int, List[str]]]:
 
     """
-    From a VH or VL amino acid sequences returns the three CDR sequences as determined
+    For VH or VL amino acid sequence returns the three CDR sequences as determined
     from the input numbering (scheme) and the given ranges.
     default ranges are Chothia CDRs.
 
     ============================================================================
     Note:
     * Gracefully stolen and refactored get_cdr_simple() from Parapred source code.
-    * Returns a dictionary with CDR sequences, numbering scheme positions for each CDR residue and CDR lengths
+    * Returns a dictionary with CDR sequences, numbering scheme positions for each CDR residue.
     """
 
     anarci_output = run_and_parse_anarci(
@@ -157,7 +157,7 @@ def get_annotations(
 ) -> Dict[str, str]:
 
     """
-    Annotation and CDRs definition for a given VH or VL sequence.
+    Annotation and CDR definition for a given VH or VL sequence.
     Convenience wrapper around get_sequence_annotations() with defined CDR schemas.
     """
 
@@ -934,7 +934,7 @@ def probe(
     probe_sequence : str
         VH sequence to use as a probe.
     df : pd.DataFrame
-        pandas dataframe to cluster.
+        pandas dataframe to probe.
     vh_aa_sequence_col_name : str
         column name for VH sequences.
     scheme : str, default "chothia"
