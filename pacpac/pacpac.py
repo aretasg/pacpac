@@ -109,7 +109,7 @@ def get_sequence_annotations(
     if chain_type == "K" and chain_type not in cdr1_scheme:
         chain_type = "L"
     if chain_type not in cdr1_scheme:
-        raise Exception(f"chain_type {chain_type} is not in input CDR scheme")
+        raise ValueError(f"chain_type {chain_type} is not in input CDR scheme")
 
     cdr1_scheme = cdr1_scheme[chain_type]
     cdr2_scheme = cdr2_scheme[chain_type]
@@ -732,6 +732,7 @@ def cluster(
     clonotype_identity_threshold: Optional[float] = 0.72,
     structural_equivalence: Optional[bool] = True,
     perform_clonotyping: Optional[bool] = True,
+    tokenize: Optional[bool] = False
 ) -> pd.DataFrame:
 
     """
@@ -763,6 +764,8 @@ def cluster(
             choice should be used and paratopes with different CDR lengths should be compared.
     perform_clonotyping : bool, default True
         specify if clonotyping should be performed.
+    tokenize : bool, default False
+        specify if residues should be tokenized when clustering to match residues of the same group.
 
     Returns
     -------
@@ -846,14 +849,48 @@ def cluster(
     if structural_equivalence is True:
         paratope_dict_col = "PARATOPE_DICT_NUMBERED"
 
+    # S =  small; N = nucleophilic; H = hydrophobic; A = aromatic; C = acidic; M = amine; B = basic
+    residue_token_dict = {
+        "G": "S",
+        "A": "S",
+        "S": "N",
+        "T": "N",
+        "C": "N",
+        "V": "H",
+        "L": "H",
+        "I": "H",
+        "M": "H",
+        "P": "H",
+        "F": "A",
+        "W": "A",
+        "Y": "A",
+        "D": "C",
+        "E": "C",
+        "N": "M",
+        "Q": "M",
+        "K": "B",
+        "H": "B",
+        "R": "B",
+    }
+
     # reformatting paratope dict column
-    df["PARATOPE_DICT_REFORMAT"] = [
-        {
-            cdr: {str(residue[0]): residue[1] for residue in value}
-            for cdr, value in paratope_dict.items()
-        }
-        for paratope_dict in df[paratope_dict_col]
-    ]
+    if tokenize:
+        df["PARATOPE_DICT_REFORMAT"] = [
+            {
+                cdr: {str(residue[0]): residue_token_dict[residue[1]] for residue in value}
+                for cdr, value in paratope_dict.items()
+            }
+            for paratope_dict in df[paratope_dict_col]
+        ]
+    else:
+        df["PARATOPE_DICT_REFORMAT"] = [
+            {
+                cdr: {str(residue[0]): residue[1] for residue in value}
+                for cdr, value in paratope_dict.items()
+            }
+            for paratope_dict in df[paratope_dict_col]
+        ]
+
     df["PARATOPE_DICT_REFORMAT"] = [
         convert_to_typed_numba_dict(paratope_dict)
         for paratope_dict in df["PARATOPE_DICT_REFORMAT"]
@@ -924,6 +961,7 @@ def probe(
     clonotype_identity_threshold: Optional[float] = 0.72,
     structural_equivalence: Optional[bool] = True,
     perform_clonotyping: Optional[bool] = True,
+    tokenize: Optional[bool] = False
 ) -> pd.DataFrame:
 
     """
@@ -957,6 +995,8 @@ def probe(
             choice should be used and paratopes with different CDR lengths should be compared.
     perform_clonotyping : bool, default True
         specify if clonotyping should be performed.
+    tokenize : bool, default False
+        specify if residues should be tokenized when probing to match residues of the same group.
 
     Returns
     -------
@@ -1039,14 +1079,48 @@ def probe(
     nan_df3 = df[df["PARATOPE"].isnull()]
     df = df[df["PARATOPE"].notnull()]
 
+    # S =  small; N = nucleophilic; H = hydrophobic; A = aromatic; C = acidic; M = amine; B = basic
+    residue_token_dict = {
+        "G": "S",
+        "A": "S",
+        "S": "N",
+        "T": "N",
+        "C": "N",
+        "V": "H",
+        "L": "H",
+        "I": "H",
+        "M": "H",
+        "P": "H",
+        "F": "A",
+        "W": "A",
+        "Y": "A",
+        "D": "C",
+        "E": "C",
+        "N": "M",
+        "Q": "M",
+        "K": "B",
+        "H": "B",
+        "R": "B",
+    }
+
     # reformatting paratope dict column
-    df["PARATOPE_DICT_REFORMAT"] = [
-        {
-            cdr: {str(residue[0]): residue[1] for residue in value}
-            for cdr, value in paratope_dict.items()
-        }
-        for paratope_dict in df[paratope_dict_col]
-    ]
+    if tokenize:
+        df["PARATOPE_DICT_REFORMAT"] = [
+            {
+                cdr: {str(residue[0]): residue_token_dict[residue[1]] for residue in value}
+                for cdr, value in paratope_dict.items()
+            }
+            for paratope_dict in df[paratope_dict_col]
+        ]
+    else:
+        df["PARATOPE_DICT_REFORMAT"] = [
+            {
+                cdr: {str(residue[0]): residue[1] for residue in value}
+                for cdr, value in paratope_dict.items()
+            }
+            for paratope_dict in df[paratope_dict_col]
+        ]
+
     df["PARATOPE_DICT_REFORMAT"] = [
         convert_to_typed_numba_dict(paratope_dict)
         for paratope_dict in df["PARATOPE_DICT_REFORMAT"]
