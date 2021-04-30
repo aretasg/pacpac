@@ -29,8 +29,8 @@ df = pacpac.probe(<probe_vh_amino_acid_sequence>, df, <vh_amino_acid_sequence_co
 ```
 
 ## :gem: Features
-* Sequence annotations operations by anarci are parallelized with pandarallel.
-* Deep learning model Parapred for paratope predictions (Liberis et al., 2018).
+* Sequence annotations operations by [ANARCI](https://github.com/oxpig/ANARCI) are parallelized with pandarallel.
+* Deep learning model [Parapred](https://github.com/eliberis/parapred) for paratope predictions (Liberis et al., 2018).
 * Clusters using greedy incremental approach.
 * Determinism is achieved by sorting the input data set by CDR lengths and paratope length for clonotype and paratope clustering, respectively, and amino acid sequence in a descending order.
 * Each cluster has a representitive sequence as indicated by a keyword `seed`.

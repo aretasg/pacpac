@@ -266,7 +266,7 @@ def annotations_for_df(
                 scheme=scheme,
                 cdr_scheme=cdr_scheme,
             )
-        except Exception:
+        except TypeError:
             annotations = {
                 "CDR1": None,
                 "CDR1_NUMBERING": None,
@@ -377,7 +377,8 @@ def cluster_by_clonotype(
                 jh_gene_list,
                 vh_cdr3_aa_list,
             )
-            if check_clonotype(
+            if index2 not in set(assigned_id_list)
+            and check_clonotype(
                 vh,
                 jh,
                 cdr3_len,
@@ -390,7 +391,6 @@ def cluster_by_clonotype(
                 end_cdr,
             )
             >= identity_threshold
-            and index2 not in set(assigned_id_list)
         ]
 
         assigned_id_list += members
@@ -497,8 +497,9 @@ def parapred_for_df(
             prob_dict = get_paratope_probabilities(
                 {"CDR1": cdr1, "CDR2": cdr2, "CDR3": cdr3}
             )
-        except Exception:
+        except ValueError:
             prob_dict = None
+
         return prob_dict
 
     df["PARATOPE_PROBS"] = df[["CDR1", "CDR2", "CDR3"]].apply(
@@ -518,7 +519,7 @@ def paratopes_for_df(
 
     def reformat_parapred_output(row, threshold=paratope_residue_threshold):
 
-        try:
+        if row["PARATOPE_PROBS"] is not None:
             prob_dict_numbered = apply_numbering_scheme_positions(
                 row["PARATOPE_PROBS"],
                 row[["CDR1_NUMBERING", "CDR2_NUMBERING", "CDR3_NUMBERING"]],
@@ -530,7 +531,7 @@ def paratopes_for_df(
                 prob_dict_numbered, paratope_residue_threshold
             )
             paratope = get_paratope_string(row["PARATOPE_PROBS"], threshold)
-        except Exception:
+        else:
             prob_dict_numbered = None
             paratope_dict = None
             paratope_dict_numbered = None
@@ -672,7 +673,8 @@ def cluster_by_paratope(
                 paratope_len_list,
                 paratope_dict_list,
             )
-            if check_paratope(
+            if index2 not in set(assigned_id_list)
+            and check_paratope(
                 cdr1,
                 cdr2,
                 cdr3,
@@ -685,7 +687,6 @@ def cluster_by_paratope(
                 paratope2,
             )
             >= identity_threshold
-            and index2 not in set(assigned_id_list)
         ]
 
         assigned_id_list += members
