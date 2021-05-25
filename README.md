@@ -3,7 +3,7 @@
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.4470165.svg)](https://doi.org/10.5281/zenodo.4470165)
 [![License](https://img.shields.io/badge/License-BSD%203--Clause-blue.svg)](https://opensource.org/licenses/BSD-3-Clause)
 
-Python package to probe and cluster antibody VH sequence paratopes and clonotypes
+Python package to probe and cluster antibody paratopes and clonotypes
 
 ## :battery: Requirements
 * Linux/macOS/Windows (WSL-only)
@@ -24,8 +24,14 @@ import pandas as pd
 from pacpac import pacpac
 
 df = pd.read_csv(<my_data_set.csv>)
+
 df = pacpac.cluster(df, <vh_amino_acid_sequence_column_name>)
 df = pacpac.probe(<probe_vh_amino_acid_sequence>, df, <vh_amino_acid_sequence_column_name>)
+
+# or alternatively cluster and/or probe using both, VH and VL, sequences
+df = pacpac.cluster(df, <vh_amino_acid_sequence_column_name>, <vl_amino_acid_sequence_column_name>)
+df = pacpac.probe(<probe_vh_amino_acid_sequence>, df, <vh_amino_acid_sequence_column_name>,
+    <vl_amino_acid_sequence_column_name>, <probe_vh_amino_acid_sequence>)
 ```
 
 ## :gem: Features
@@ -38,7 +44,7 @@ df = pacpac.probe(<probe_vh_amino_acid_sequence>, df, <vh_amino_acid_sequence_co
 * Paratope probing and clustering provides several clustering options.
 
 ### Probing & Clustering options
-* If `structural_equivalence` is set to `False` matches paratopes of equal CDR lengths only and assumes that CDRs of the same length always have deletions at the same position. Check `CL-97141` in `Pertussis_SC.csv` (IMGT numbering and North CDR definition) in the publication supplementary material for outliers to this assumption (Richardson et al., 2020). Useful in detection of very similar paratopes.
+* If `structural_equivalence` is set to `False` matches paratopes of equal CDR lengths only and assumes that CDRs of the same length always have deletions at the same position (Richardson et al., 2020). Useful in fast detection of similar paratopes.
 * When set to `True` structurally equivalence as assigned by the numbering scheme is used (i.e. numbering residue positions are used for residue matching to allow for a comparison at structuraly equivalent positions) and assumes that CDRs of different lengths can have similar paratopes (default). Also, the number of paratope residue matches is divided by the longer paratope residue count to penalize the paratope residue count mismatches i.e. the larger the paratope count difference the larger the penalty. Useful in detection of similar binding modes.
 * Sequence residues can be tokenized based on residue type groupings (`tokenize=True`) as described by Wong et al., 2020.
 

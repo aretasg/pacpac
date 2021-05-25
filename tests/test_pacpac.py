@@ -6,8 +6,11 @@ from pacpac import pacpac
 
 
 TEST_VH_AA_SEQ = "EVQLVESGGGLVQPGGSLRLSCAASGFTFSNYWMSWVRQAPGKGLEWVANIKQDGSEKYYVDSVKGRFTISTDNARNSLYLQMNSLRAEDTAVYYCARERRGYYYGSGSFSDDYYFGMDVWGQGATVIVSS"
+TEST_VL_AA_SEQ = "DIQMTQSPSTLSASVGDRVTITCRASQSISSWLAWYQQKPGKAPKLLIYKASSLESGVPSRFSGSGSGTEFTLTISSLQPDDFATYYCQQYNSYSLTFGGGTKVEIK"
 TEST_DATASET = "pertussis_sc_200_head.csv"
 TEST_VH_COL_NAME = "VH_AMINO_ACID_SEQUENCE"
+TEST_VL_COL_NAME = "VL_AMINO_ACID_SEQUENCE"
+DF = pd.read_csv(TEST_DATASET)
 
 
 class pacpac_test(unittest.TestCase):
@@ -21,9 +24,8 @@ class pacpac_test(unittest.TestCase):
 
 
     def test_clustering_se_false(self):
-        df = pd.read_csv(TEST_DATASET)
         df = pacpac.cluster(
-            df,
+            DF,
             TEST_VH_COL_NAME,
             structural_equivalence=False,
         )
@@ -32,9 +34,8 @@ class pacpac_test(unittest.TestCase):
 
 
     def test_clustering_se_true(self):
-        df = pd.read_csv(TEST_DATASET)
         df = pacpac.cluster(
-            df,
+            DF,
             TEST_VH_COL_NAME,
             structural_equivalence=True,
         )
@@ -43,9 +44,8 @@ class pacpac_test(unittest.TestCase):
 
 
     def test_clustering_no_clonotyping(self):
-        df = pd.read_csv(TEST_DATASET)
         df = pacpac.cluster(
-            df,
+            DF,
             TEST_VH_COL_NAME,
             perform_clonotyping=False
         )
@@ -54,9 +54,8 @@ class pacpac_test(unittest.TestCase):
 
 
     def test_clustering_tokenize(self):
-        df = pd.read_csv(TEST_DATASET)
         df = pacpac.cluster(
-            df,
+            DF,
             TEST_VH_COL_NAME,
             tokenize=True
         )
@@ -64,12 +63,20 @@ class pacpac_test(unittest.TestCase):
         self.assertIsInstance(df, pd.DataFrame)
 
 
-    def test_probing_ignore_se_false(self):
+    def test_clustering_both_chains(self):
+        df = pacpac.cluster(
+            DF,
+            TEST_VH_COL_NAME,
+            TEST_VL_COL_NAME
+        )
 
-        df = pd.read_csv(TEST_DATASET)
+        self.assertIsInstance(df, pd.DataFrame)
+
+
+    def test_probing_ignore_se_false(self):
         df = pacpac.probe(
             TEST_VH_AA_SEQ,
-            df,
+            DF,
             TEST_VH_COL_NAME,
             structural_equivalence=False,
         )
@@ -78,11 +85,9 @@ class pacpac_test(unittest.TestCase):
 
 
     def test_probing_ignore_se_true(self):
-
-        df = pd.read_csv(TEST_DATASET)
         df = pacpac.probe(
             TEST_VH_AA_SEQ,
-            df,
+            DF,
             TEST_VH_COL_NAME,
             structural_equivalence=True,
         )
@@ -91,11 +96,9 @@ class pacpac_test(unittest.TestCase):
 
 
     def test_probing_no_clonotyping(self):
-
-        df = pd.read_csv(TEST_DATASET)
         df = pacpac.probe(
             TEST_VH_AA_SEQ,
-            df,
+            DF,
             TEST_VH_COL_NAME,
             perform_clonotyping=False
         )
@@ -104,13 +107,22 @@ class pacpac_test(unittest.TestCase):
 
 
     def test_probing_tokenize(self):
-
-        df = pd.read_csv(TEST_DATASET)
         df = pacpac.probe(
             TEST_VH_AA_SEQ,
-            df,
+            DF,
             TEST_VH_COL_NAME,
             tokenize=True
+        )
+
+        self.assertIsInstance(df, pd.DataFrame)
+
+    def test_probing_both_chains(self):
+        df = pacpac.probe(
+            TEST_VH_AA_SEQ,
+            DF,
+            TEST_VH_COL_NAME,
+            TEST_VL_COL_NAME,
+            TEST_VL_AA_SEQ
         )
 
         self.assertIsInstance(df, pd.DataFrame)

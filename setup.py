@@ -4,12 +4,12 @@ dependencies = []
 
 setup(
     name="pacpac",
-    version="0.2.1",
+    version="0.3.0",
     url="https://github.com/aretasg/pacpac",
     license="BSD",
     author="Aretas Gaspariunas",
     author_email="aretasgasp@gmail.com",
-    description="Python package to probe and cluster antibody VH sequence paratopes and clonotypes",
+    description="Python package to probe and cluster antibody paratopes and clonotypes",
     platforms="Linux",
     long_description=open('README.md').read(),
     packages=find_packages(),
