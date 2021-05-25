@@ -749,9 +749,9 @@ def convert_to_typed_numba_dict(
 ) -> Dict[str, Dict[str, str]]:
 
     # https://github.com/numba/numba/issues/6191#issuecomment-684022879
-    '''
+    """
     Converts nested Python dictionary to a typed numba dictionary
-    '''
+    """
 
     inner_dict_type = types.DictType(types.unicode_type, types.unicode_type)
     d = numbaDict.empty(
@@ -774,13 +774,15 @@ def convert_to_typed_numba_dict(
 
 def rename_dict_keys(input_dict: Dict[str, Any], prefix: str) -> Dict[str, Any]:
 
-    '''
+    """
     Creates a copy of an input_dict with keys carrying the prefix specified
-    '''
+    """
 
     current_keys = input_dict.keys()
     new_keys = [prefix + i for i in current_keys]
-    new_dict = {new: input_dict[current] for current, new in zip(current_keys, new_keys)}
+    new_dict = {
+        new: input_dict[current] for current, new in zip(current_keys, new_keys)
+    }
 
     return new_dict
 
@@ -795,9 +797,9 @@ def annotate_sequence(
     structural_equivalence: Optional[bool] = True,
 ) -> Dict[str, Any]:
 
-    '''
+    """
     Annotates input VH or VL sequence with anarci and parapred
-    '''
+    """
 
     annotations = get_annotations(
         sequence,
@@ -831,20 +833,24 @@ def annotate_sequence(
 
 def start_and_checks(scheme: str, cdr_scheme: str) -> bool:
 
-    '''
+    """
     Prints starting message to the console and checks scheme and cdr_scheme inputs
-    '''
+    """
 
     print(figlet_format("PaCPaC", font="banner"))
 
     scheme = scheme.lower()
     if scheme not in ("chothia", "imgt", "martin"):
-        print(f"You don't want to input *{scheme}*. You want to go home and rethink your life")
+        print(
+            f"You don't want to input *{scheme}*. You want to go home and rethink your life"
+        )
         return False
 
     cdr_scheme = cdr_scheme.lower()
     if cdr_scheme not in ("chothia", "imgt", "north", "contact"):
-        print(f"You don't want to input *{cdr_scheme}*. You want to go home and rethink your life")
+        print(
+            f"You don't want to input *{cdr_scheme}*. You want to go home and rethink your life"
+        )
         return False
 
     return True
@@ -853,14 +859,14 @@ def start_and_checks(scheme: str, cdr_scheme: str) -> bool:
 def tokenize_and_reformat(
     df: pd.DataFrame,
     structural_equivalence: Optional[bool] = True,
-    tokenize: Optional[bool] = False
+    tokenize: Optional[bool] = False,
 ) -> pd.DataFrame:
 
-    '''
+    """
     Reformats paratope column in the dataframe;
     Counts paratope length;
     Optionally tokenizes residues;
-    '''
+    """
 
     # as described by Wong et al., 2020
     # S =  small; N = nucleophilic; H = hydrophobic; A = aromatic; C = acidic; M = amine; B = basic
@@ -895,7 +901,9 @@ def tokenize_and_reformat(
     if tokenize:
         df["PARATOPE_DICT_REFORMAT"] = [
             {
-                cdr: {str(residue[0]): residue_token_dict[residue[1]] for residue in value}
+                cdr: {
+                    str(residue[0]): residue_token_dict[residue[1]] for residue in value
+                }
                 for cdr, value in paratope_dict.items()
             }
             for paratope_dict in df[paratope_dict_col]
@@ -935,36 +943,63 @@ def paratopes_for_df_both_chains(
     both_chains: Optional[bool] = True,
 ) -> Tuple[pd.DataFrame, pd.DataFrame]:
 
-    '''
+    """
     Calculates paratopes for VH or VH and VL, formats output and merges two dataframes
-    '''
+    """
 
     df = parapred_for_df(df, paratope_residue_threshold=paratope_residue_threshold)
     df = paratopes_for_df(df, paratope_residue_threshold=paratope_residue_threshold)
     if both_chains:
-        vl_df = parapred_for_df(vl_df, paratope_residue_threshold=paratope_residue_threshold)
-        vl_df = paratopes_for_df(vl_df, paratope_residue_threshold=paratope_residue_threshold)
+        vl_df = parapred_for_df(
+            vl_df, paratope_residue_threshold=paratope_residue_threshold
+        )
+        vl_df = paratopes_for_df(
+            vl_df, paratope_residue_threshold=paratope_residue_threshold
+        )
 
-        vl_df = vl_df[["CDR1", "CDR2", "CDR3", "PARATOPE_DICT", "PARATOPE_DICT_NUMBERED", "PARATOPE"]]
+        vl_df = vl_df[
+            [
+                "CDR1",
+                "CDR2",
+                "CDR3",
+                "PARATOPE_DICT",
+                "PARATOPE_DICT_NUMBERED",
+                "PARATOPE",
+            ]
+        ]
 
         # and 'L' and 'H' prefix for VL and VL col names
-        vl_df.columns = ['L' + i for i in vl_df.columns]
-        df.rename(columns={'CDR1': 'HCDR1', 'CDR2': 'HCDR2', 'CDR3': 'HCDR3'}, inplace=True)
+        vl_df.columns = ["L" + i for i in vl_df.columns]
+        df.rename(
+            columns={"CDR1": "HCDR1", "CDR2": "HCDR2", "CDR3": "HCDR3"}, inplace=True
+        )
         # merge both dataframes
-        df = df.merge(vl_df, how='left', left_index=True, right_index=True)
+        df = df.merge(vl_df, how="left", left_index=True, right_index=True)
         # exclude sequences where parapred has failed for VH paratope or VL paratope
         nan_df3 = df[df["PARATOPE"].isnull() | df["LPARATOPE"].isnull()]
         df = df[df["PARATOPE"].notnull() | df["LPARATOPE"].notnull()]
 
         # rename paratope dict keys
-        df["PARATOPE_DICT"] = [rename_dict_keys(i, 'H') for i in df["PARATOPE_DICT"]]
-        df["LPARATOPE_DICT"] = [rename_dict_keys(i, 'L') for i in df["LPARATOPE_DICT"]]
-        df["PARATOPE_DICT_NUMBERED"] = [rename_dict_keys(i, 'H') for i in df["PARATOPE_DICT_NUMBERED"]]
-        df["LPARATOPE_DICT_NUMBERED"] = [rename_dict_keys(i, 'L') for i in df["LPARATOPE_DICT_NUMBERED"]]
+        df["PARATOPE_DICT"] = [rename_dict_keys(i, "H") for i in df["PARATOPE_DICT"]]
+        df["LPARATOPE_DICT"] = [rename_dict_keys(i, "L") for i in df["LPARATOPE_DICT"]]
+        df["PARATOPE_DICT_NUMBERED"] = [
+            rename_dict_keys(i, "H") for i in df["PARATOPE_DICT_NUMBERED"]
+        ]
+        df["LPARATOPE_DICT_NUMBERED"] = [
+            rename_dict_keys(i, "L") for i in df["LPARATOPE_DICT_NUMBERED"]
+        ]
 
         # merge paratope columns
-        df["PARATOPE_DICT"] = [{**dict1, **dict2} for dict1, dict2 in zip(df["PARATOPE_DICT"], df["LPARATOPE_DICT"])]
-        df["PARATOPE_DICT_NUMBERED"] = [{**dict1, **dict2} for dict1, dict2 in zip(df["PARATOPE_DICT_NUMBERED"], df["LPARATOPE_DICT_NUMBERED"])]
+        df["PARATOPE_DICT"] = [
+            {**dict1, **dict2}
+            for dict1, dict2 in zip(df["PARATOPE_DICT"], df["LPARATOPE_DICT"])
+        ]
+        df["PARATOPE_DICT_NUMBERED"] = [
+            {**dict1, **dict2}
+            for dict1, dict2 in zip(
+                df["PARATOPE_DICT_NUMBERED"], df["LPARATOPE_DICT_NUMBERED"]
+            )
+        ]
         df["PARATOPE"] = df["PARATOPE"] + " " * 4 + df["LPARATOPE"]
     else:
         # exclude sequences where parapred has failed
@@ -986,7 +1021,7 @@ def cluster(
     clonotype_identity_threshold: Optional[float] = 0.72,
     structural_equivalence: Optional[bool] = True,
     perform_clonotyping: Optional[bool] = True,
-    tokenize: Optional[bool] = False
+    tokenize: Optional[bool] = False,
 ) -> pd.DataFrame:
 
     """
@@ -1043,8 +1078,13 @@ def cluster(
 
     # slicing rows where both VH and VL is NaN
     if both_chains:
-        nan_df = df[df[vh_aa_sequence_col_name].isnull() & df[vl_aa_sequence_col_name].isnull()]
-        df = df[df[vh_aa_sequence_col_name].notnull() & df[vl_aa_sequence_col_name].notnull()]
+        nan_df = df[
+            df[vh_aa_sequence_col_name].isnull() & df[vl_aa_sequence_col_name].isnull()
+        ]
+        df = df[
+            df[vh_aa_sequence_col_name].notnull()
+            & df[vl_aa_sequence_col_name].notnull()
+        ]
     else:
         nan_df = df[df[vh_aa_sequence_col_name].isnull()]
         df = df[df[vh_aa_sequence_col_name].notnull()]
@@ -1113,8 +1153,8 @@ def cluster(
         df,
         vl_df,
         both_chains=both_chains,
-        paratope_residue_threshold=paratope_residue_threshold
-        )
+        paratope_residue_threshold=paratope_residue_threshold,
+    )
 
     print("Hold on. This whole paratope clustering was your idea")
 
@@ -1172,7 +1212,7 @@ def cluster(
         ],
         axis=1,
         inplace=True,
-        errors='ignore'
+        errors="ignore",
     )
     df.sort_index(inplace=True)
 
@@ -1195,7 +1235,7 @@ def probe(
     clonotype_identity_threshold: Optional[float] = 0.72,
     structural_equivalence: Optional[bool] = True,
     perform_clonotyping: Optional[bool] = True,
-    tokenize: Optional[bool] = False
+    tokenize: Optional[bool] = False,
 ) -> pd.DataFrame:
 
     """
@@ -1261,7 +1301,7 @@ def probe(
         assign_germline=perform_clonotyping,
         num_extra_residues=num_extra_residues,
         paratope_residue_threshold=paratope_identity_threshold,
-        structural_equivalence=True
+        structural_equivalence=True,
     )
     if both_chains:
         vl_probe_dict = annotate_sequence(
@@ -1271,17 +1311,31 @@ def probe(
             assign_germline=False,
             num_extra_residues=num_extra_residues,
             paratope_residue_threshold=paratope_identity_threshold,
-            structural_equivalence=True
+            structural_equivalence=True,
         )
 
         # merge probe dicts
-        probe_dict["PARATOPE_DICT_REFORMAT"] = rename_dict_keys(probe_dict["PARATOPE_DICT_REFORMAT"], 'H')
-        vl_probe_dict["PARATOPE_DICT_REFORMAT"] = rename_dict_keys(vl_probe_dict["PARATOPE_DICT_REFORMAT"], 'L')
-        probe_dict["PARATOPE_DICT_REFORMAT"] = {**probe_dict["PARATOPE_DICT_REFORMAT"], **vl_probe_dict["PARATOPE_DICT_REFORMAT"]}
-        probe_dict["PARATOPE_DICT_REFORMAT"] = convert_to_typed_numba_dict(probe_dict["PARATOPE_DICT_REFORMAT"])
+        probe_dict["PARATOPE_DICT_REFORMAT"] = rename_dict_keys(
+            probe_dict["PARATOPE_DICT_REFORMAT"], "H"
+        )
+        vl_probe_dict["PARATOPE_DICT_REFORMAT"] = rename_dict_keys(
+            vl_probe_dict["PARATOPE_DICT_REFORMAT"], "L"
+        )
+        probe_dict["PARATOPE_DICT_REFORMAT"] = {
+            **probe_dict["PARATOPE_DICT_REFORMAT"],
+            **vl_probe_dict["PARATOPE_DICT_REFORMAT"],
+        }
+        probe_dict["PARATOPE_DICT_REFORMAT"] = convert_to_typed_numba_dict(
+            probe_dict["PARATOPE_DICT_REFORMAT"]
+        )
         # slicing rows where both VH and VL is NaN
-        nan_df = df[df[vh_aa_sequence_col_name].isnull() & df[vl_aa_sequence_col_name].isnull()]
-        df = df[df[vh_aa_sequence_col_name].notnull() & df[vl_aa_sequence_col_name].notnull()]
+        nan_df = df[
+            df[vh_aa_sequence_col_name].isnull() & df[vl_aa_sequence_col_name].isnull()
+        ]
+        df = df[
+            df[vh_aa_sequence_col_name].notnull()
+            & df[vl_aa_sequence_col_name].notnull()
+        ]
     else:
         nan_df = df[df[vh_aa_sequence_col_name].isnull()]
         df = df[df[vh_aa_sequence_col_name].notnull()]
@@ -1362,10 +1416,12 @@ def probe(
         df,
         vl_df,
         both_chains=both_chains,
-        paratope_residue_threshold=paratope_residue_threshold
-        )
+        paratope_residue_threshold=paratope_residue_threshold,
+    )
 
-    df = tokenize_and_reformat(df, structural_equivalence=structural_equivalence, tokenize=tokenize)
+    df = tokenize_and_reformat(
+        df, structural_equivalence=structural_equivalence, tokenize=tokenize
+    )
 
     # probing with paratope
     print("This is where the paratope probing begins")
@@ -1447,7 +1503,7 @@ def probe(
         ],
         axis=1,
         inplace=True,
-        errors='ignore'
+        errors="ignore",
     )
 
     print("Another happy probing")
