@@ -31,7 +31,7 @@ df = pacpac.probe(<probe_vh_amino_acid_sequence>, df, <vh_amino_acid_sequence_co
 # or alternatively cluster and/or probe using both, VH and VL, sequences
 df = pacpac.cluster(df, <vh_amino_acid_sequence_column_name>, <vl_amino_acid_sequence_column_name>)
 df = pacpac.probe(<probe_vh_amino_acid_sequence>, df, <vh_amino_acid_sequence_column_name>,
-    <vl_amino_acid_sequence_column_name>, <probe_vh_amino_acid_sequence>)
+    <vl_amino_acid_sequence_column_name>, <probe_vl_amino_acid_sequence>)
 ```
 
 ## :gem: Features
