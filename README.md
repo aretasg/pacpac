@@ -44,9 +44,9 @@ df = pacpac.probe(<probe_vh_amino_acid_sequence>, df, <vh_amino_acid_sequence_co
 * Paratope probing and clustering provides several clustering options.
 
 ### Probing & Clustering options
-* If `structural_equivalence` is set to `False` matches paratopes of equal CDR lengths only and assumes that CDRs of the same length always have deletions at the same position (Richardson et al., 2020). Useful in fast detection of similar paratopes.
-* When set to `True` structurally equivalence as assigned by the numbering scheme is used (i.e. numbering residue positions are used for residue matching to allow for a comparison at structuraly equivalent positions) and assumes that CDRs of different lengths can have similar paratopes (default). Also, the number of paratope residue matches is divided by the longer paratope residue count to penalize the paratope residue count mismatches i.e. the larger the paratope count difference the larger the penalty. Useful in detection of similar binding modes.
-* Sequence residues can be tokenized based on residue type groupings (`tokenize=True`) as described by Wong et al., 2020.
+* If `structural_equivalence` is set to `False` matches paratopes of equal CDR lengths only and assumes that CDRs of the same length always have deletions at the same position (Richardson et al., 2021). Useful in fast detection of similar paratopes.
+* When set to `True` structurally equivalence as assigned by the numbering scheme is used (i.e. numbering residue positions are used for residue matching to allow for a comparison at structuraly equivalent positions) and assumes that CDRs of different lengths can have similar paratopes (default). Useful in detection of similar binding modes.
+* Sequence residues can be tokenized (`tokenize=True`) based on residue type groupings as described by Wong et al., 2021.
 
 ## :question: Probing and clustering arguments
 ```python
@@ -71,8 +71,8 @@ Written by **Aretas Gaspariunas**. Have a question? You can always ask and I can
 
 ## References
 - Liberis et al., 2018
-- Richardson et al., 2020
-- Wong et al., 2020
+- Richardson et al., 2021
+- Wong et al., 2021
 
 ## :apple: Citing
 If you found PaCPaC useful for your work please acknowledge it by citing this repository.
