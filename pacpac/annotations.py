@@ -434,6 +434,36 @@ def paratopes_for_df(
     return df
 
 
+def get_residue_token_dict() -> Dict[str, str]:
+
+    # as described by Wong et al., 2020
+    # S =  small; N = nucleophilic; H = hydrophobic; A = aromatic; C = acidic; M = amine; B = basic
+    residue_token_dict = {
+        "G": "S",
+        "A": "S",
+        "S": "N",
+        "T": "N",
+        "C": "N",
+        "V": "H",
+        "L": "H",
+        "I": "H",
+        "M": "H",
+        "P": "H",
+        "F": "A",
+        "W": "A",
+        "Y": "A",
+        "D": "C",
+        "E": "C",
+        "N": "M",
+        "Q": "M",
+        "K": "B",
+        "H": "B",
+        "R": "B",
+    }
+
+    return residue_token_dict
+
+
 def annotate_sequence(
     sequence: str,
     scheme: Optional[str] = "chothia",
@@ -442,6 +472,7 @@ def annotate_sequence(
     num_extra_residues: Optional[int] = 2,
     paratope_residue_threshold: Optional[float] = 0.67,
     structural_equivalence: Optional[bool] = True,
+    tokenize: Optional[bool] = False,
 ) -> Dict[str, Any]:
 
     """
@@ -464,10 +495,17 @@ def annotate_sequence(
         prob_dict, paratope_residue_threshold
     )
     annotations["PARATOPE_DICT"] = paratope
-    annotations["PARATOPE_DICT_REFORMAT"] = {
-        cdr: {str(residue[0]): residue[1] for residue in value}
-        for cdr, value in annotations["PARATOPE_DICT"].items()
-    }
+    if tokenize:
+        residue_token_dict = get_residue_token_dict()
+        annotations["PARATOPE_DICT_REFORMAT"] = {
+            cdr: {str(residue[0]): residue_token_dict[residue[1]] for residue in value}
+            for cdr, value in annotations["PARATOPE_DICT"].items()
+        }
+    else:
+        annotations["PARATOPE_DICT_REFORMAT"] = {
+            cdr: {str(residue[0]): residue[1] for residue in value}
+            for cdr, value in annotations["PARATOPE_DICT"].items()
+        }
     annotations["PARATOPE_LEN"] = sum(
         len(res_dict) for cdr, res_dict in annotations["PARATOPE_DICT_REFORMAT"].items()
     )
@@ -564,37 +602,13 @@ def tokenize_and_reformat(
     Optionally tokenizes residues;
     """
 
-    # as described by Wong et al., 2020
-    # S =  small; N = nucleophilic; H = hydrophobic; A = aromatic; C = acidic; M = amine; B = basic
-    residue_token_dict = {
-        "G": "S",
-        "A": "S",
-        "S": "N",
-        "T": "N",
-        "C": "N",
-        "V": "H",
-        "L": "H",
-        "I": "H",
-        "M": "H",
-        "P": "H",
-        "F": "A",
-        "W": "A",
-        "Y": "A",
-        "D": "C",
-        "E": "C",
-        "N": "M",
-        "Q": "M",
-        "K": "B",
-        "H": "B",
-        "R": "B",
-    }
-
     paratope_dict_col = "PARATOPE_DICT"
     if structural_equivalence is True:
         paratope_dict_col = "PARATOPE_DICT_NUMBERED"
 
     # reformatting paratope dict column
     if tokenize:
+        residue_token_dict = get_residue_token_dict()
         df["PARATOPE_DICT_REFORMAT"] = [
             {
                 cdr: {

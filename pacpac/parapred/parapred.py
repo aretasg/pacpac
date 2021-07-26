@@ -67,7 +67,7 @@ Options:
 """
 from __future__ import print_function
 
-from docopt import docopt
+# from docopt import docopt
 from pandas import read_csv
 import numpy as np
 import pkg_resources

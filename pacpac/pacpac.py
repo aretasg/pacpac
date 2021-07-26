@@ -3,13 +3,14 @@
 from typing import List, Dict, Optional
 
 import pandas as pd
-from pyfiglet import figlet_format
 import numpy as np
+from pyfiglet import figlet_format
 from numba import njit
 from numba.typed import List as numbaList
 
 from pacpac.utils import convert_to_typed_numba_dict, rename_dict_keys
-from pacpac.annotations import annotate_sequence, annotations_for_df, paratopes_for_df_both_chains, tokenize_and_reformat
+from pacpac.annotations import annotate_sequence, annotations_for_df, \
+    paratopes_for_df_both_chains, tokenize_and_reformat
 
 
 @njit(cache=True)
@@ -386,7 +387,7 @@ def cluster(
     structural_equivalence : bool, default True
         specify whether structural equivalence as assigned by the numbering scheme of
         choice should be used and paratopes with different CDR lengths to be compared.
-        Defaults to True if clustering VH and VL pairs.
+        Always defaults to True if clustering VH and VL pairs.
     perform_clonotyping : bool, default True
         specify if clonotyping should be performed.
     tokenize : bool, default False
@@ -610,7 +611,7 @@ def probe(
     structural_equivalence : bool, default True
         specify whether structural equivalence as assigned by the numbering scheme of
         choice should be used and paratopes with different CDR lengths to be compared.
-        Defaults to True if clustering VH and VL pairs.
+        Always defaults to True if clustering VH and VL pairs.
     perform_clonotyping : bool, default True
         specify if clonotyping should be performed.
     tokenize : bool, default False
@@ -641,6 +642,7 @@ def probe(
         num_extra_residues=num_extra_residues,
         paratope_residue_threshold=paratope_identity_threshold,
         structural_equivalence=structural_equivalence,
+        tokenize=tokenize
     )
     if both_chains:
         vl_probe_dict = annotate_sequence(
@@ -651,6 +653,7 @@ def probe(
             num_extra_residues=num_extra_residues,
             paratope_residue_threshold=paratope_identity_threshold,
             structural_equivalence=True,
+            tokenize=tokenize
         )
 
         # merge probe dicts
