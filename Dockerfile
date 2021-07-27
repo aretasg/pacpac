@@ -1,7 +1,7 @@
 FROM frolvlad/alpine-miniconda3 as build
 
 WORKDIR pacpac
-COPY environment.yml setup.py .
+COPY environment.yml setup.py ./
 WORKDIR pacpac
 COPY pacpac .
 WORKDIR ..
