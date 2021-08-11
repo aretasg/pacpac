@@ -26,7 +26,7 @@ def cluster(
 ) -> None:
 
     """
-    Annotates and clusters by clonotype (single chain only) and paratope (single chain only or both chains).
+    Annotates and clusters by clonotype (single chain only) and paratope (single chain or both chains).
     """
 
     full_csv_path = Path(dataset_csv_path).resolve()
@@ -70,7 +70,7 @@ def probe(
 ) -> None:
 
     """
-    Probe sequences in the pandas dataframe for similar paratopes (single chain only or both chains) and clonotypes (single chain only).
+    Probe sequences in the pandas dataframe for similar paratopes (single or both chains) and clonotypes (single chain only).
     """
 
     full_csv_path = Path(dataset_csv_path).resolve()

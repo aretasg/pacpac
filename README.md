@@ -14,10 +14,10 @@ git clone https://github.com/aretasg/pacpac.git
 cd pacpac
 ```
 #### :computer: Example usage with Docker
-Note the sequence CSV dataset must in the PaCPaC directory (`PWD`) upon calling `docker-compose`.
+Note the `csv_dataset` must in the PaCPaC directory (`PWD`) when calling `docker-compose`.
 ```bash
 docker-compose run pacpac cluster <csv_dataset> <vh_amino_acid_sequence_column_name>
-docker-compose run pacpac probe <probe_vh_amino_acid_sequence>, <csv_dataset>, <vh_amino_acid_sequence_column_name>
+docker-compose run pacpac probe <probe_vh_amino_acid_sequence> <csv_dataset> <vh_amino_acid_sequence_column_name>
 ```
 ### :snake: Conda
 #### Installation with Conda
@@ -53,7 +53,7 @@ df = pacpac.probe(
 #### :computer: Example usage in CLI
 ```bash
 pacpac cluster <path_to_csv_dataset> <vh_amino_acid_sequence_column_name>
-pacpac probe <probe_vh_amino_acid_sequence>, <path_to_csv_dataset>, <vh_amino_acid_sequence_column_name>
+pacpac probe <probe_vh_amino_acid_sequence> <path_to_csv_dataset> <vh_amino_acid_sequence_column_name>
 ```
 ## :question: Probing and clustering arguments
 ### within Python
@@ -68,7 +68,7 @@ pacpac probe --help
 ```
 
 ## :gem: Features
-* Sequence annotations operations by [ANARCI](https://github.com/oxpig/ANARCI).
+* Sequence annotations operations by [ANARCI](https://github.com/oxpig/ANARCI) (Dunbar and Deane, 2015).
 * Deep learning model [Parapred](https://github.com/eliberis/parapred) for paratope predictions (Liberis et al., 2018).
 * Clusters using greedy clustering approach.
 * Determinism is achieved by sorting the input data set by CDR lengths and paratope length for clonotype and paratope clustering, respectively, and amino acid sequence in a descending order.
@@ -78,7 +78,7 @@ pacpac probe --help
 
 ### Probing & Clustering options
 * If `structural_equivalence` is set to `False` matches paratopes of equal CDR lengths only and assumes that CDRs of the same length always have deletions at the same position (Richardson et al., 2021). Useful in fast detection of similar paratopes.
-* When set to `True` structurally equivalence as assigned by the numbering scheme is used (i.e. numbering residue positions are used for residue matching to allow for a comparison at structuraly equivalent positions) and assumes that CDRs of different lengths can have similar paratopes (default). Useful in detection of similar binding modes.
+* When set to `True` (default) structurally equivalence as assigned by the numbering scheme is used (i.e. numbering residue positions are used for residue matching to allow for a comparison at structuraly equivalent positions) and assumes that CDRs of different lengths can have similar paratopes. Useful in detection of similar binding modes.
 * Sequence residues can be tokenized (`tokenize=True`) based on residue type groupings as described by Wong et al., 2021.
 
 ## :checkered_flag: Benchmarks with 10K VH sequences with 4 conventional CPU cores
@@ -97,6 +97,7 @@ Annotating the data set and running Parapred are performence bottlenecks and can
 Written by **Aretas Gaspariunas**. Have a question? You can always ask and I can always ignore.
 
 ## References
+- Dunbar and Deane, 2015
 - Liberis et al., 2018
 - Richardson et al., 2021
 - Wong et al., 2021

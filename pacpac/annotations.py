@@ -115,18 +115,17 @@ def get_sequence_annotations(
     cdr1_numbering, cdr2_numbering, cdr3_numbering = [], [], []
     for num_tuple, res in numbering:
         residue_position = str(num_tuple[0]) + num_tuple[1].rstrip()
+        if res == "-":
+            continue
         if num_tuple[0] in cdr1_scheme:
-            if res != "-":
-                cdr1_numbering.append(residue_position)
-                cdr1 += res
+            cdr1_numbering.append(residue_position)
+            cdr1 += res
         elif num_tuple[0] in cdr2_scheme:
-            if res != "-":
-                cdr2_numbering.append(residue_position)
-                cdr2 += res
+            cdr2_numbering.append(residue_position)
+            cdr2 += res
         elif num_tuple[0] in cdr3_scheme:
-            if res != "-":
-                cdr3_numbering.append(residue_position)
-                cdr3 += res
+            cdr3_numbering.append(residue_position)
+            cdr3 += res
 
     annotation_dict = {
         "CDR1": cdr1,
@@ -275,7 +274,7 @@ def annotations_for_df(
                 "V_IDENTITY": None,
                 "J_GENE": None,
                 "J_IDENTITY": None,
-                "NUMBERING": None,
+                # "NUMBERING": None,
             }
         for key, value in annotations.items():
             row[key] = value
@@ -318,11 +317,10 @@ def apply_numbering_scheme_positions(
 
     numbered_prob_dict = {}
     for cdr_name, cdr in prob_dict.items():
-        numbered_prob_dict[cdr_name] = []
-        for index, res in enumerate(cdr):
-            numbered_prob_dict[cdr_name].append(
-                (numbering_dict[f"{cdr_name}_NUMBERING"][index], res[1], res[2])
-            )
+        numbered_prob_dict[cdr_name] = [
+            (numbering_dict[f"{cdr_name}_NUMBERING"][index], res[1], res[2])
+            for index, res in enumerate(cdr)
+        ]
 
     return numbered_prob_dict
 
@@ -338,10 +336,10 @@ def apply_paratope_prediction_threshold(
 
     paratope_dict = {}
     for cdr_name, cdr in prob_dict.items():
-        paratope_residue_list = [
-            residue for residue in cdr if residue[2] > paratope_residue_threshold
+        paratope_dict[cdr_name] = [
+            residue
+            for residue in cdr if residue[2] > paratope_residue_threshold
         ]
-        paratope_dict[cdr_name] = paratope_residue_list
 
     return paratope_dict
 
