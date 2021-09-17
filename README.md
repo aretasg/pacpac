@@ -14,7 +14,7 @@ git clone https://github.com/aretasg/pacpac.git
 cd pacpac
 ```
 #### :computer: Example usage with Docker
-Note the `csv_dataset` must in the PaCPaC directory (`PWD`) when calling `docker-compose`.
+Note the `csv_dataset` and `PWD` must be in the PaCPaC home directory where `docker-compose.yml` is located.
 ```bash
 docker-compose run pacpac cluster <csv_dataset> <vh_amino_acid_sequence_column_name>
 docker-compose run pacpac probe <probe_vh_amino_acid_sequence> <csv_dataset> <vh_amino_acid_sequence_column_name>

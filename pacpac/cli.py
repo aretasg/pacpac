@@ -26,25 +26,16 @@ def cluster(
 ) -> None:
 
     """
-    Annotates and clusters by clonotype (single chain only) and paratope (single chain or both chains).
+    Annotates and clusters by clonotype (single chain only)
+    and paratope (single chain or both chains).
     """
+
+    keyword_args = locals()
+    optional_args = {key: keyword_args[key] for key in keyword_args if key not in {'dataset_csv_path'}}
 
     full_csv_path = Path(dataset_csv_path).resolve()
     df = pd.read_csv(full_csv_path)
-    df = pacpac.cluster(
-        df,
-        vh_aa_sequence_col_name,
-        vl_aa_sequence_col_name=vl_aa_sequence_col_name,
-        scheme=scheme,
-        cdr_scheme=cdr_scheme,
-        num_extra_residues=num_extra_residues,
-        paratope_residue_threshold=paratope_residue_threshold,
-        paratope_identity_threshold=paratope_identity_threshold,
-        clonotype_identity_threshold=clonotype_identity_threshold,
-        structural_equivalence=structural_equivalence,
-        perform_clonotyping=perform_clonotyping,
-        tokenize=tokenize,
-        )
+    df = pacpac.cluster(df=df, **optional_args)
     df.to_csv(full_csv_path.parent / (
         full_csv_path.stem + '_clustered' + full_csv_path.suffix
         )
@@ -70,27 +61,16 @@ def probe(
 ) -> None:
 
     """
-    Probe sequences in the pandas dataframe for similar paratopes (single or both chains) and clonotypes (single chain only).
+    Probe sequences in a dataframe for similar paratopes (single or both chains)
+    and clonotypes (single chain only).
     """
+
+    keyword_args = locals()
+    optional_args = {key: keyword_args[key] for key in keyword_args if key not in {'dataset_csv_path'}}
 
     full_csv_path = Path(dataset_csv_path).resolve()
     df = pd.read_csv(full_csv_path)
-    df = pacpac.probe(
-        vh_probe_sequence,
-        df,
-        vh_aa_sequence_col_name,
-        vl_aa_sequence_col_name=vl_aa_sequence_col_name,
-        vl_probe_sequence=vl_probe_sequence,
-        scheme=scheme,
-        cdr_scheme=cdr_scheme,
-        num_extra_residues=num_extra_residues,
-        paratope_residue_threshold=paratope_residue_threshold,
-        paratope_identity_threshold=paratope_identity_threshold,
-        clonotype_identity_threshold=clonotype_identity_threshold,
-        structural_equivalence=structural_equivalence,
-        perform_clonotyping=perform_clonotyping,
-        tokenize=tokenize,
-        )
+    df = pacpac.probe(df=df, **optional_args)
     df.to_csv(full_csv_path.parent / (
         full_csv_path.stem + '_probed' + full_csv_path.suffix
         )
