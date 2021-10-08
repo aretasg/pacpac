@@ -28,6 +28,7 @@ def run_and_parse_anarci(
     allow: Optional[set] = {"H", "K", "L"},
     scheme: Optional[str] = "imgt",
     assign_germline: Optional[bool] = True,
+    database: Optional[str] = "ALL",
 ) -> Dict[str, str]:
 
     """
@@ -40,6 +41,7 @@ def run_and_parse_anarci(
         assign_germline=assign_germline,
         output=False,
         allow=allow,
+        database=database
     )
     if assign_germline:
         output_dict = {

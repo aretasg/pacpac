@@ -6,7 +6,7 @@ import pandas as pd
 import numpy as np
 from pyfiglet import figlet_format
 from numba import njit
-from numba.typed import List as numbaList
+# from numba.typed import List as numbaList
 
 from pacpac.utils import convert_to_typed_numba_dict, rename_dict_keys
 from pacpac.annotations import annotate_sequence, annotations_for_df, \
@@ -23,8 +23,6 @@ def check_clonotype(
     target_j_gene: str,
     target_cdr3_len: int,
     target_cdr3_aa_seq: str,
-    start_cdr: int,
-    end_cdr: int,
 ) -> float:
 
     """
@@ -45,15 +43,12 @@ def check_clonotype(
         match_count = len(
             [
                 True
-                for res1, res2 in zip(
-                    probe_cdr3_aa_seq[start_cdr:end_cdr],
-                    target_cdr3_aa_seq[start_cdr:end_cdr],
-                )
+                for res1, res2 in zip(probe_cdr3_aa_seq, target_cdr3_aa_seq)
                 if res1 == res2
             ]
         )
 
-        sequence_identity = match_count / (probe_cdr3_len - 2 * start_cdr)
+        sequence_identity = match_count / probe_cdr3_len
 
     return sequence_identity
 
@@ -66,7 +61,6 @@ def cluster_by_clonotype(
     vh_cdr3_len_list: List[int],
     vh_cdr3_aa_list: List[str],
     identity_threshold: float,
-    num_extra_residues: Optional[int] = 0,
 ) -> Dict[tuple, List[int]]:
 
     """
@@ -74,20 +68,16 @@ def cluster_by_clonotype(
     Just a PoC - can be optimized further. The key is to know when to stop (I think).
     """
 
-    count = 1
+    cluster_count = 1
     cluster_dict = dict()
     k = {(1, 2): np.arange(1), (3, 4): np.arange(2)}  # dict types for numba compiler
     assigned_id_list = [-1]  # declaring a list of ints for numba compiler
-
-    end_cdr = -1 * num_extra_residues
-    if num_extra_residues == 0:
-        end_cdr = None
 
     for index, cdr3_len, vh, jh, cdr3_aa in zip(
         index_list, vh_cdr3_len_list, vh_gene_list, jh_gene_list, vh_cdr3_aa_list
     ):
 
-        if index in set(assigned_id_list):
+        if index in assigned_id_list:
             continue
 
         members = [
@@ -99,8 +89,7 @@ def cluster_by_clonotype(
                 jh_gene_list,
                 vh_cdr3_aa_list,
             )
-            if index2 not in set(assigned_id_list)
-            and check_clonotype(
+            if check_clonotype(
                 vh,
                 jh,
                 cdr3_len,
@@ -109,16 +98,15 @@ def cluster_by_clonotype(
                 jh2,
                 cdr3_len2,
                 cdr3_aa2,
-                num_extra_residues,
-                end_cdr,
             )
             >= identity_threshold
+            and index2 not in assigned_id_list
         ]
 
         assigned_id_list += members
         if len(members) > 1:
-            cluster_dict[(count, index)] = np.array(members)
-            count += 1
+            cluster_dict[(cluster_count, index)] = np.array(members)
+            cluster_count += 1
 
     return cluster_dict
 
@@ -355,6 +343,7 @@ def cluster(
     clonotype_identity_threshold: Optional[float] = 0.72,
     structural_equivalence: Optional[bool] = True,
     perform_clonotyping: Optional[bool] = True,
+    perform_paratyping: Optional[bool] = True,
     tokenize: Optional[bool] = False,
 ) -> pd.DataFrame:
 
@@ -390,6 +379,8 @@ def cluster(
         Always defaults to True if clustering VH and VL pairs.
     perform_clonotyping : bool, default True
         specify if clonotyping should be performed.
+    perform_paratyping : bool, default True
+        specify if paratyping should be performed.
     tokenize : bool, default False
         specify if residues should be tokenized when clustering to match residues of the same group.
 
@@ -454,17 +445,34 @@ def cluster(
         nan_df2 = df[df["CDR3"].isnull()]
         df = df[df["CDR3"].notnull()]
 
-    def assign_cluster(row: pd.Series, cluster_dict: Dict[str, List[int]]) -> str:
+    def assign_cluster(
+        df: pd.DataFrame,
+        cluster_dict: Dict[str, List[int]],
+        cluster_type: str
+    ) -> pd.DataFrame:
 
-        for cluster_no, sequences in cluster_dict.items():
-            if row.name in sequences:
-                return str(cluster_no[0]) + f" (seed: {cluster_no[1]})"
+        cluster_df = pd.DataFrame.from_dict(
+            cluster_dict,
+            orient='index'
+            ).stack().to_frame().reset_index().drop('level_1', axis=1)
+        cluster_df.columns = [f'{cluster_type}_CLUSTER', 'id']
+        cluster_df[f'{cluster_type}_CLUSTER'] = [
+            str(i[0]) + f" (seed: {i[1]})"
+            for i in cluster_df[f'{cluster_type}_CLUSTER']
+            ]
+        cluster_df.set_index('id', inplace=True)
+
+        return pd.merge(df, cluster_df, how='left', left_index=True, right_index=True)
 
     if perform_clonotyping is True:
 
         df["HCDR1_LEN"] = df["CDR1"].astype(str).map(len)
         df["HCDR2_LEN"] = df["CDR2"].astype(str).map(len)
         df["HCDR3_LEN"] = df["CDR3"].astype(str).map(len)
+
+        # exclude sequences 0 len for HCDR3
+        nan_df3 = df[df['HCDR3_LEN'].values <= num_extra_residues * 2]
+        df = df[df['HCDR3_LEN'].values > num_extra_residues * 2]
 
         df.sort_values(
             ["HCDR3_LEN", "HCDR2_LEN", "HCDR1_LEN", vh_aa_sequence_col_name],
@@ -473,64 +481,75 @@ def cluster(
         )
 
         print("Now THIS is clonotype clustering")
+        end_cdr = -1 * num_extra_residues
+        if num_extra_residues == 0:
+            end_cdr = None
+
         clonotype_cluster_dict = cluster_by_clonotype(
-            numbaList(df.index.tolist()),
-            numbaList(df["V_GENE"].tolist()),
-            numbaList(df["J_GENE"].tolist()),
-            numbaList(df["HCDR3_LEN"].tolist()),
-            numbaList(df["CDR3"].tolist()),
+            df.index.tolist(),
+            df["V_GENE"].tolist(),
+            df["J_GENE"].tolist(),
+            (df["HCDR3_LEN"] - 2 * num_extra_residues).tolist(),
+            df["CDR3"].str[num_extra_residues:end_cdr].tolist(),
             clonotype_identity_threshold,
-            num_extra_residues=num_extra_residues,
         )
-        df["CLONOTYPE_CLUSTER"] = df.apply(
-            assign_cluster, args=(clonotype_cluster_dict,), axis=1
-        )
+
+        df = assign_cluster(df, clonotype_cluster_dict, 'CLONOTYPE')
+
+        df = pd.concat(
+            [df, nan_df3], ignore_index=False, axis=0, sort=False
+            )
+
         print("Your clonotypes are very impressive. You must be very proud")
 
-    print("Learning to stop worrying and falling in love with the paratope")
+    if perform_paratyping is True:
 
-    df, nan_df3 = paratopes_for_df_both_chains(
-        df,
-        vl_df,
-        both_chains=both_chains,
-        paratope_residue_threshold=paratope_residue_threshold,
-    )
+        print("Learning to stop worrying and falling in love with the paratope")
 
-    print("Hold on. This whole paratope clustering was your idea")
-
-    df = tokenize_and_reformat(df, structural_equivalence=True, tokenize=tokenize)
-
-    df.sort_values(
-        ["PARATOPE_LEN", vh_aa_sequence_col_name],
-        ascending=False,
-        inplace=True,
-    )
-
-    if structural_equivalence is False and both_chains is False:
-        paratope_cluster_dict = cluster_by_paratope(
-            numbaList(df.index.tolist()),
-            numbaList(df["CDR1"].tolist()),
-            numbaList(df["CDR2"].tolist()),
-            numbaList(df["CDR3"].tolist()),
-            numbaList(df["PARATOPE_LEN"].tolist()),
-            numbaList(df["PARATOPE_DICT_REFORMAT"].tolist()),
-            paratope_identity_threshold,
-        )
-    else:
-        paratope_cluster_dict = cluster_by_paratope_structural(
-            numbaList(df.index.tolist()),
-            numbaList(df["PARATOPE_LEN"].tolist()),
-            numbaList(df["PARATOPE_DICT_REFORMAT"].tolist()),
-            paratope_identity_threshold,
+        df, nan_df4 = paratopes_for_df_both_chains(
+            df,
+            vl_df,
+            both_chains=both_chains,
+            paratope_residue_threshold=paratope_residue_threshold,
         )
 
-    df["PARATOPE_CLUSTER"] = df.apply(
-        assign_cluster, args=(paratope_cluster_dict,), axis=1
-    )
-    print("200,000 paratopes are ready, with a million more well on the way")
+        print("Hold on. This whole paratope clustering was your idea")
+
+        df = tokenize_and_reformat(df, structural_equivalence=True, tokenize=tokenize)
+
+        df.sort_values(
+            ["PARATOPE_LEN", vh_aa_sequence_col_name],
+            ascending=False,
+            inplace=True,
+        )
+
+        if structural_equivalence is False and both_chains is False:
+            paratope_cluster_dict = cluster_by_paratope(
+                df.index.tolist(),
+                df["CDR1"].tolist(),
+                df["CDR2"].tolist(),
+                df["CDR3"].tolist(),
+                df["PARATOPE_LEN"].tolist(),
+                df["PARATOPE_DICT_REFORMAT"].tolist(),
+                paratope_identity_threshold,
+            )
+        else:
+            paratope_cluster_dict = cluster_by_paratope_structural(
+                df.index.tolist(),
+                df["PARATOPE_LEN"].tolist(),
+                df["PARATOPE_DICT_REFORMAT"].tolist(),
+                paratope_identity_threshold,
+            )
+
+        df = assign_cluster(df, paratope_cluster_dict, 'PARATOPE')
+        print("200,000 paratopes are ready, with a million more well on the way")
+
+        df = pd.concat(
+            [df, nan_df4], ignore_index=False, axis=0, sort=False
+            )
 
     df = pd.concat(
-        [df, nan_df, nan_df2, nan_df3], ignore_index=False, axis=0, sort=False
+        [df, nan_df, nan_df2], ignore_index=False, axis=0, sort=False
     )
     df.drop(
         [
@@ -575,11 +594,13 @@ def probe(
     clonotype_identity_threshold: Optional[float] = 0.72,
     structural_equivalence: Optional[bool] = True,
     perform_clonotyping: Optional[bool] = True,
+    perform_paratyping: Optional[bool] = True,
     tokenize: Optional[bool] = False,
 ) -> pd.DataFrame:
 
     """
-    Probe sequences in the pandas dataframe for similar paratopes (single chain only or both chains) and clonotypes (single chain only).
+    Probe sequences in the pandas dataframe for similar paratopes (single chain only or both chains)
+    and clonotypes (single chain only).
 
     Parameters
     ----------
@@ -722,6 +743,14 @@ def probe(
         df["HCDR2_LEN"] = df["CDR2"].astype(str).map(len)
         df["HCDR3_LEN"] = df["CDR3"].astype(str).map(len)
 
+        # exclude sequences 0 len for HCDR3
+        nan_df3 = df[df['HCDR3_LEN'].values <= num_extra_residues * 2]
+        df = df[df['HCDR3_LEN'].values > num_extra_residues * 2]
+
+        probe_cdr3_len = len(probe_dict["CDR3"]) - 2 * num_extra_residues
+        if probe_cdr3_len == 0:
+            raise ValueError("Probe CDR3 length cannot be zero")
+
         print("We're just clonotypes, sir. We're meant to be expendable")
 
         end_cdr = -1 * num_extra_residues
@@ -733,81 +762,94 @@ def probe(
             if check_clonotype(
                 probe_dict["V_GENE"],
                 probe_dict["J_GENE"],
-                len(probe_dict["CDR3"]),
-                probe_dict["CDR3"],
+                probe_cdr3_len,
+                probe_dict["CDR3"][num_extra_residues:end_cdr],
                 vh,
                 jh,
                 cdr3_len,
                 cdr3_aa,
-                num_extra_residues,
-                end_cdr,
             )
             >= clonotype_identity_threshold
             else False
             for vh, jh, cdr3_len, cdr3_aa in zip(
-                df["V_GENE"], df["J_GENE"], df["HCDR3_LEN"], df["CDR3"]
+                df["V_GENE"],
+                df["J_GENE"],
+                (df["HCDR3_LEN"] - 2 * num_extra_residues),
+                df["CDR3"].str[num_extra_residues:end_cdr]
             )
         ]
+
+        df = pd.concat(
+            [df, nan_df3], ignore_index=False, axis=0, sort=False
+            )
     else:
         df["CLONOTYPE_MATCH"] = None
 
-    # create paratopes for sequences in df
-    print("Learning to stop worrying and falling in love with the paratope")
+    if perform_paratyping is True:
 
-    df, nan_df3 = paratopes_for_df_both_chains(
-        df,
-        vl_df,
-        both_chains=both_chains,
-        paratope_residue_threshold=paratope_residue_threshold,
-    )
+        # create paratopes for sequences in df
+        print("Learning to stop worrying and falling in love with the paratope")
 
-    df = tokenize_and_reformat(
-        df, structural_equivalence=structural_equivalence, tokenize=tokenize
-    )
+        df, nan_df4 = paratopes_for_df_both_chains(
+            df,
+            vl_df,
+            both_chains=both_chains,
+            paratope_residue_threshold=paratope_residue_threshold,
+        )
 
-    # probing with paratope
-    print("This is where the paratope probing begins")
-    if structural_equivalence is False and both_chains is False:
-        df["PARATOPE_MATCH"] = [
-            True
-            if check_paratope_equal_len_cdrs(
-                probe_dict["CDR1"],
-                probe_dict["CDR2"],
-                probe_dict["CDR3"],
-                probe_dict["PARATOPE_LEN"],
-                probe_dict["PARATOPE_DICT_REFORMAT"],
-                cdr1,
-                cdr2,
-                cdr3,
-                paratope_len,
-                paratope,
+        df = tokenize_and_reformat(
+            df, structural_equivalence=structural_equivalence, tokenize=tokenize
+        )
+
+        # probing with paratope
+        print("This is where the paratope probing begins")
+        if structural_equivalence is False and both_chains is False:
+            df["PARATOPE_MATCH"] = [
+                True
+                if check_paratope_equal_len_cdrs(
+                    probe_dict["CDR1"],
+                    probe_dict["CDR2"],
+                    probe_dict["CDR3"],
+                    probe_dict["PARATOPE_LEN"],
+                    probe_dict["PARATOPE_DICT_REFORMAT"],
+                    cdr1,
+                    cdr2,
+                    cdr3,
+                    paratope_len,
+                    paratope,
+                )
+                >= paratope_identity_threshold
+                else False
+                for cdr1, cdr2, cdr3, paratope_len, paratope in zip(
+                    df["CDR1"],
+                    df["CDR2"],
+                    df["CDR3"],
+                    df["PARATOPE_LEN"],
+                    df["PARATOPE_DICT_REFORMAT"],
+                )
+            ]
+        else:
+            df["PARATOPE_MATCH"] = [
+                True
+                if check_paratope_structural(
+                    probe_dict["PARATOPE_LEN"],
+                    probe_dict["PARATOPE_DICT_REFORMAT"],
+                    paratope_len,
+                    paratope,
+                )
+                >= paratope_identity_threshold
+                else False
+                for paratope_len, paratope in zip(
+                    df["PARATOPE_LEN"],
+                    df["PARATOPE_DICT_REFORMAT"],
+                )
+            ]
+
+        df = pd.concat(
+            [df, nan_df4], ignore_index=False, axis=0, sort=False
             )
-            >= paratope_identity_threshold
-            else False
-            for cdr1, cdr2, cdr3, paratope_len, paratope in zip(
-                df["CDR1"],
-                df["CDR2"],
-                df["CDR3"],
-                df["PARATOPE_LEN"],
-                df["PARATOPE_DICT_REFORMAT"],
-            )
-        ]
     else:
-        df["PARATOPE_MATCH"] = [
-            True
-            if check_paratope_structural(
-                probe_dict["PARATOPE_LEN"],
-                probe_dict["PARATOPE_DICT_REFORMAT"],
-                paratope_len,
-                paratope,
-            )
-            >= paratope_identity_threshold
-            else False
-            for paratope_len, paratope in zip(
-                df["PARATOPE_LEN"],
-                df["PARATOPE_DICT_REFORMAT"],
-            )
-        ]
+        df["PARATOPE_MATCH"] = None
 
     df["PREDICTION_SPACE"] = [
         "both"
@@ -821,7 +863,7 @@ def probe(
     ]
 
     df = pd.concat(
-        [df, nan_df, nan_df2, nan_df3], ignore_index=False, axis=0, sort=False
+        [df, nan_df, nan_df2], ignore_index=False, axis=0, sort=False
     )
     df.drop(
         [
