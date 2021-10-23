@@ -6,4 +6,5 @@ get_cdrs.py
 .pytest*
 *.ipynb
 *.csv
+!tests/*.csv
 *.xlsx
