@@ -222,25 +222,25 @@ def process_fasta_file(fastafile):
         process_full_VH_VL_sequence(str(srec.seq))
 
 
-def main():
-    arguments = docopt(__doc__, version="Parapred v1.0.1")
-    if arguments["pdb"]:
-        if arguments["<pdb_file>"]:
-            process_single_pdb(
-                arguments["<pdb_file>"], arguments["--abh"], arguments["--abl"]
-            )
-        else:
-            process_multiple_pdbs(arguments["--pdb-list"], arguments["--pdb-folder"])
-    elif arguments["cdr"]:
-        if arguments["<cdr_seq>"]:
-            process_single_cdr(arguments["<cdr_seq>"])
-        else:
-            process_cdr_sequences(arguments["--cdr-list"])
-    elif arguments["seq"]:
-        process_full_VH_VL_sequence(arguments["<sequence>"])
-    elif arguments["fasta"]:
-        process_fasta_file(arguments["<fasta_file>"])
+# def main():
+#     arguments = docopt(__doc__, version="Parapred v1.0.1")
+#     if arguments["pdb"]:
+#         if arguments["<pdb_file>"]:
+#             process_single_pdb(
+#                 arguments["<pdb_file>"], arguments["--abh"], arguments["--abl"]
+#             )
+#         else:
+#             process_multiple_pdbs(arguments["--pdb-list"], arguments["--pdb-folder"])
+#     elif arguments["cdr"]:
+#         if arguments["<cdr_seq>"]:
+#             process_single_cdr(arguments["<cdr_seq>"])
+#         else:
+#             process_cdr_sequences(arguments["--cdr-list"])
+#     elif arguments["seq"]:
+#         process_full_VH_VL_sequence(arguments["<sequence>"])
+#     elif arguments["fasta"]:
+#         process_fasta_file(arguments["<fasta_file>"])
 
 
-if __name__ == "__main__":
-    main()
+# if __name__ == "__main__":
+#     main()
