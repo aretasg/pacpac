@@ -2,6 +2,7 @@
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.4470165.svg)](https://doi.org/10.5281/zenodo.4470165)
 [![License](https://img.shields.io/badge/License-BSD%203--Clause-blue.svg)](https://opensource.org/licenses/BSD-3-Clause)
+[![GitHub Actions (Tests)](https://github.com/aretasg/pacpac/workflows/Tests/badge.svg)](https://github.com/aretasg/pacpac)
 
 Python package to probe and cluster antibody paratopes and clonotypes
 
