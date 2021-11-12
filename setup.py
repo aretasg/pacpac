@@ -13,7 +13,6 @@ setup(
     platforms="posix",
     packages=find_packages(),
     package_data={"": ["weights.h5"]},
-    include_package_data=True,
     install_requires=dependencies,
     python_requires=">=3.7, <3.8",
     entry_points={"console_scripts": "pacpac = pacpac.cli:cli"},

@@ -445,6 +445,10 @@ def cluster(
         nan_df2 = df[df["CDR3"].isnull()]
         df = df[df["CDR3"].notnull()]
 
+    if df.empty is True:
+        raise ValueError('ANARCI failed to number the sequences. \
+            Make sure amino acid sequences are used as input!')
+
     def assign_cluster(
         df: pd.DataFrame,
         cluster_dict: Dict[str, List[int]],
@@ -735,6 +739,10 @@ def probe(
     else:
         nan_df2 = df[df["CDR3"].isnull()]
         df = df[df["CDR3"].notnull()]
+
+    if df.empty is True:
+        raise ValueError('ANARCI failed to number the sequences. \
+            Make sure amino acid sequences are used as input!')
 
     # probing with clonotype
     if perform_clonotyping is True:

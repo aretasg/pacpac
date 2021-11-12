@@ -2,7 +2,7 @@ version: "3.8"
 services:
   pacpac:
     build: .
-    image: pacpac
+    image: pacpac:latest
     volumes:
-      - $PWD:$PWD
-    working_dir: $PWD
+      - ./data:/data
+    working_dir: /data

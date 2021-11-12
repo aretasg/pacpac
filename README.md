@@ -15,11 +15,12 @@ git clone https://github.com/aretasg/pacpac.git
 cd pacpac
 ```
 #### :computer: Example usage with Docker
-Note the `csv_dataset` and `PWD` must be in the PaCPaC home directory where `docker-compose.yml` is located.
+Note the `csv_dataset` must be deposited in the `/data` folder.
 ```bash
 docker-compose run pacpac cluster <csv_dataset> <vh_amino_acid_sequence_column_name>
 docker-compose run pacpac probe <probe_vh_amino_acid_sequence> <csv_dataset> <vh_amino_acid_sequence_column_name>
 ```
+Check `/data` folder for output
 ### :snake: Conda
 #### Installation with Conda
 Install [conda](https://docs.conda.io/en/latest/miniconda.html) first

@@ -8,3 +8,5 @@ get_cdrs.py
 *.csv
 !tests/*.csv
 *.xlsx
+data/*
+!data/README.md
