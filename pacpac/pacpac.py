@@ -455,6 +455,10 @@ def cluster(
         cluster_type: str
     ) -> pd.DataFrame:
 
+        if not cluster_dict:
+            df[f'{cluster_type}_CLUSTER'] = None
+            return df
+
         cluster_df = pd.DataFrame.from_dict(
             cluster_dict,
             orient='index'
@@ -467,6 +471,7 @@ def cluster(
         cluster_df.set_index('id', inplace=True)
 
         return pd.merge(df, cluster_df, how='left', left_index=True, right_index=True)
+
 
     if perform_clonotyping is True:
 
