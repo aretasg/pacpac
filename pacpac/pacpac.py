@@ -515,18 +515,12 @@ def cluster(
 
         print("Learning to stop worrying and falling in love with the paratope")
 
-        import time
-        start = time.time()
         df, nan_df4 = paratopes_for_df_both_chains(
             df,
             vl_df,
             both_chains=both_chains,
             paratope_residue_threshold=paratope_residue_threshold,
         )
-        end = time.time()
-        print(end - start)
-        import sys
-        sys.exit()
 
         print("Hold on. This whole paratope clustering was your idea")
 
