@@ -87,7 +87,7 @@ pacpac probe --help
 | Task | Time (s) | Notes |
 | -----------: | ----------------- | :----------: |
 | Annotations using anarci | 378 | parallel execution |
-| Paratope prediction using parapred | 494 | parallel execution without CPU/GPU speed up for TensorFlow |
+| Paratope prediction using parapred | 207 | parallel execution without CPU/GPU speed up for TensorFlow |
 | Clonotype clustering | 13 | on amino acid level |
 | Paratope clustering | 13 | `structural_equivalence=False` |
 | Paratope clustering | 130 | `structural_equivalence=True` |

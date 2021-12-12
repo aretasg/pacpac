@@ -289,7 +289,10 @@ def annotations_for_df(
     return df
 
 
-def get_paratope_probabilities(cdrs: Dict[str, str]) -> Dict[str, List[tuple]]:
+def get_paratope_probabilities(
+    cdrs: Dict[str, str],
+    cdr_list: Optional[List[str]] = ["CDR1", "CDR2", "CDR3"]
+) -> Dict[str, List[tuple]]:
 
     """
     Runs Parapred prediction on a set of CDRs.
@@ -297,36 +300,13 @@ def get_paratope_probabilities(cdrs: Dict[str, str]) -> Dict[str, List[tuple]]:
     Dictionary value is a list of tuples with residue position, residue and probability.
     """
 
-    paratope_probs = {}
-    for cdr, cdr_seq in cdrs.items():
-        if cdr not in ["CDR1", "CDR2", "CDR3"]:
-            continue
-        prob = parapred([cdr_seq])
-        paratope_probs[cdr] = [
-            (pos, residue, prob[0, pos]) for pos, residue in enumerate(cdr_seq)
-        ]
+    prob = parapred([cdrs[i] for i in cdr_list])
+    paratope_probs = {
+        cdr: [(pos, residue, prob[index, pos]) for pos, residue in enumerate(cdrs[cdr])]
+        for index, cdr in enumerate(cdr_list)
+    }
 
     return paratope_probs
-
-
-# def get_paratope_probabilities(
-#     cdrs: Dict[str, str],
-#     cdr_list: Optional[List[str]] = ["CDR1", "CDR2", "CDR3"]
-# ) -> Dict[str, List[tuple]]:
-
-#     """
-#     Runs Parapred prediction on a set of CDRs.
-#     Returns probability dictionary for each residue for being part of a paratope.
-#     Dictionary value is a list of tuples with residue position, residue and probability.
-#     """
-
-#     prob = parapred([cdrs[i] for i in cdr_list])
-#     paratope_probs = {
-#         cdr: [(pos, residue, prob[0, pos]) for pos, residue in enumerate(cdrs[cdr])]
-#         for cdr in cdr_list
-#     }
-
-#     return paratope_probs
 
 
 def apply_numbering_scheme_positions(
@@ -409,7 +389,7 @@ def parapred_for_df(
 
         return prob_dict
 
-    df["PARATOPE_PROBS"] = df[["CDR1", "CDR2", "CDR3"]].parallel_apply(
+    df["PARATOPE_PROBS"] = df[["CDR1", "CDR2", "CDR3"]].apply(
         lambda x: run_parapred(*x), axis=1
     )
 
