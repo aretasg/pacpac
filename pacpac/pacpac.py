@@ -570,9 +570,9 @@ def cluster(
             "PARATOPE_DICT_REFORMAT",
             "PARATOPE_PROBS",
             "PARATOPE_PROBS_NUMBERED",
-            "CDR1",
-            "CDR2",
-            "CDR3",
+            # "CDR1",
+            # "CDR2",
+            # "CDR3",
             "LPARATOPE_DICT",
             "LPARATOPE_DICT_NUMBERED",
             "LPARATOPE",
@@ -582,6 +582,14 @@ def cluster(
         inplace=True,
         errors="ignore",
     )
+    if both_chains:
+        df.drop(
+            ["CDR1", "CDR2", "CDR3"],
+            axis=1,
+            inplace=True,
+            errors="ignore",
+    )
+
     df.sort_index(inplace=True)
 
     print("Another happy clustering")
@@ -890,9 +898,6 @@ def probe(
             "PARATOPE_DICT",
             "PARATOPE_DICT_NUMBERED",
             "PARATOPE_DICT_REFORMAT",
-            "CDR1",
-            "CDR2",
-            "CDR3",
             "LPARATOPE_DICT",
             "LPARATOPE_DICT_NUMBERED",
             "LPARATOPE",
@@ -901,6 +906,13 @@ def probe(
         axis=1,
         inplace=True,
         errors="ignore",
+    )
+    if both_chains:
+        df.drop(
+            ["CDR1", "CDR2", "CDR3"],
+            axis=1,
+            inplace=True,
+            errors="ignore",
     )
 
     print("Another happy probing")

@@ -29,6 +29,7 @@ def run_and_parse_anarci(
     scheme: Optional[str] = "imgt",
     assign_germline: Optional[bool] = True,
     database: Optional[str] = "ALL",
+    allowed_species: Optional[List[str]] = None
 ) -> Dict[str, str]:
 
     """
@@ -41,7 +42,8 @@ def run_and_parse_anarci(
         assign_germline=assign_germline,
         output=False,
         allow=allow,
-        database=database
+        database=database,
+        allowed_species=allowed_species
     )
     if assign_germline:
         output_dict = {
@@ -262,7 +264,7 @@ def annotations_for_df(
                 scheme=scheme,
                 cdr_scheme=cdr_scheme,
             )
-        except TypeError:
+        except Exception:
             annotations = {
                 "CDR1": None,
                 "CDR1_NUMBERING": None,
@@ -305,6 +307,26 @@ def get_paratope_probabilities(cdrs: Dict[str, str]) -> Dict[str, List[tuple]]:
         ]
 
     return paratope_probs
+
+
+# def get_paratope_probabilities(
+#     cdrs: Dict[str, str],
+#     cdr_list: Optional[List[str]] = ["CDR1", "CDR2", "CDR3"]
+# ) -> Dict[str, List[tuple]]:
+
+#     """
+#     Runs Parapred prediction on a set of CDRs.
+#     Returns probability dictionary for each residue for being part of a paratope.
+#     Dictionary value is a list of tuples with residue position, residue and probability.
+#     """
+
+#     prob = parapred([cdrs[i] for i in cdr_list])
+#     paratope_probs = {
+#         cdr: [(pos, residue, prob[0, pos]) for pos, residue in enumerate(cdrs[cdr])]
+#         for cdr in cdr_list
+#     }
+
+#     return paratope_probs
 
 
 def apply_numbering_scheme_positions(
@@ -387,7 +409,7 @@ def parapred_for_df(
 
         return prob_dict
 
-    df["PARATOPE_PROBS"] = df[["CDR1", "CDR2", "CDR3"]].apply(
+    df["PARATOPE_PROBS"] = df[["CDR1", "CDR2", "CDR3"]].parallel_apply(
         lambda x: run_parapred(*x), axis=1
     )
 
@@ -459,6 +481,7 @@ def get_residue_token_dict() -> Dict[str, str]:
         "K": "B",
         "H": "B",
         "R": "B",
+        "X": "X",
     }
 
     return residue_token_dict
