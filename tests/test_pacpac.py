@@ -74,7 +74,7 @@ class pacpac_test(unittest.TestCase):
             ],
         }
 
-        cdrs = annotations.get_annotations(TEST_VH_AA_SEQ, scheme="chothia",
+        cdrs = annotations.get_annotations(TEST_VH_AA_SEQ, scheme="imgt",
             cdr_scheme="chothia", num_extra_residues=2)
         output_dict = annotations.get_paratope_probabilities(cdrs)
 

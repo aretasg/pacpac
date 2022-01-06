@@ -86,14 +86,14 @@ pacpac probe --help
 ## :checkered_flag: Benchmarks with 10K VH sequences with 4 conventional CPU cores
 | Task | Time (s) | Notes |
 | -----------: | ----------------- | :----------: |
-| Annotations using anarci | 378 | parallel execution |
-| Paratope prediction using parapred | 207 | parallel execution without CPU/GPU speed up for TensorFlow |
+| Annotations using ANARCI | 378 | parallel execution |
+| Paratope prediction using Parapred | 207 | parallel execution without CPU/GPU speed up for TensorFlow |
 | Clonotype clustering | 13 | on amino acid level |
 | Paratope clustering | 13 | `structural_equivalence=False` |
 | Paratope clustering | 130 | `structural_equivalence=True` |
 | Probing | <0.1 | clonotype & paratope |
 
-Annotating the data set and running Parapred are performence bottlenecks and can be speed up with more cores and/or CPU/GPU speed up instructions for Tensorflow.
+ANARCI and Parapred can be speed up with more cores and/or CPU/GPU speed up instructions for Tensorflow.
 
 ## :pencil2: Authors
 Written by **Aretas Gaspariunas**. Have a question? You can always ask and I can always ignore.

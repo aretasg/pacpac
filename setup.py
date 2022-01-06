@@ -4,7 +4,7 @@ dependencies = []
 
 setup(
     name="pacpac",
-    version="0.3.3",
+    version="0.3.4",
     url="https://github.com/aretasg/pacpac",
     license="BSD",
     author="Aretas Gaspariunas",

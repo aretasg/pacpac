@@ -161,10 +161,10 @@ def get_annotations(
 
     if cdr_scheme in ("imgt"):
         scheme = "imgt"
-    elif cdr_scheme in ("chothia", "contact") and scheme not in ("chothia", "martin"):
+    elif cdr_scheme in ("chothia", "contact") and scheme not in ("chothia", "martin", "imgt"):
         scheme = "chothia"
 
-    if cdr_scheme == "chothia":
+    if cdr_scheme == "chothia" and scheme == "chothia":
         cdr1_scheme = {
             "H": range(26 - num_extra_residues, 33 + num_extra_residues),
             "L": range(24 - num_extra_residues, 35 + num_extra_residues),
@@ -176,6 +176,19 @@ def get_annotations(
         cdr3_scheme = {
             "H": range(95 - num_extra_residues, 103 + num_extra_residues),
             "L": range(89 - num_extra_residues, 98 + num_extra_residues),
+        }
+    elif cdr_scheme == "chothia" and scheme == "imgt":
+        cdr1_scheme = {
+            "H": range(27 - num_extra_residues, 38 + num_extra_residues),
+            "L": range(24 - num_extra_residues, 41 + num_extra_residues),
+        }
+        cdr2_scheme = {
+            "H": range(57 - num_extra_residues, 65 + num_extra_residues),
+            "L": range(56 - num_extra_residues, 70 + num_extra_residues),
+        }
+        cdr3_scheme = {
+            "H": range(107 - num_extra_residues, 118 + num_extra_residues),
+            "L": range(105 - num_extra_residues, 118 + num_extra_residues),
         }
     elif cdr_scheme == "imgt":
         cdr1_scheme = {

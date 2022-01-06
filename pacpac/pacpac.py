@@ -335,7 +335,7 @@ def cluster(
     df: pd.DataFrame,
     vh_aa_sequence_col_name: str,
     vl_aa_sequence_col_name: Optional[str] = None,
-    scheme: Optional[str] = "chothia",
+    scheme: Optional[str] = "imgt",
     cdr_scheme: Optional[str] = "chothia",
     num_extra_residues: Optional[int] = 2,
     paratope_residue_threshold: Optional[float] = 0.67,
@@ -358,7 +358,7 @@ def cluster(
         column name for VH sequences to cluster.
     vl_aa_sequence_col_name : str, None
         column name for VL sequences to cluster.
-    scheme : str, default "chothia"
+    scheme : str, default "imgt"
         numbering scheme to use. IMGT, Chothia, Martin only.
     cdr_scheme : str, default "chothia"
         CDR definition to use. IMGT, North, Chothia and Contact supported.
@@ -603,7 +603,7 @@ def probe(
     vh_aa_sequence_col_name: str,
     vl_aa_sequence_col_name: Optional[str] = None,
     vl_probe_sequence: Optional[str] = None,
-    scheme: Optional[str] = "chothia",
+    scheme: Optional[str] = "imgt",
     cdr_scheme: Optional[str] = "chothia",
     num_extra_residues: Optional[int] = 2,
     paratope_residue_threshold: Optional[float] = 0.67,
@@ -631,7 +631,7 @@ def probe(
         column name for VL sequences to probe.
     vl_probe_sequence : str, None
         VL sequence to use as a probe.
-    scheme : str, default "chothia"
+    scheme : str, default "imgt"
         numbering scheme to use.
     cdr_scheme : str, default "chothia"
         CDR definition to use. IMGT, North, Chothia and Contact supported.
