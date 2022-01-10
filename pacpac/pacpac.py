@@ -570,9 +570,6 @@ def cluster(
             "PARATOPE_DICT_REFORMAT",
             "PARATOPE_PROBS",
             "PARATOPE_PROBS_NUMBERED",
-            # "CDR1",
-            # "CDR2",
-            # "CDR3",
             "LPARATOPE_DICT",
             "LPARATOPE_DICT_NUMBERED",
             "LPARATOPE",
@@ -779,8 +776,7 @@ def probe(
             end_cdr = None
 
         df["CLONOTYPE_MATCH"] = [
-            True
-            if check_clonotype(
+            check_clonotype(
                 probe_dict["V_GENE"],
                 probe_dict["J_GENE"],
                 probe_cdr3_len,
@@ -790,8 +786,6 @@ def probe(
                 cdr3_len,
                 cdr3_aa,
             )
-            >= clonotype_identity_threshold
-            else False
             for vh, jh, cdr3_len, cdr3_aa in zip(
                 df["V_GENE"],
                 df["J_GENE"],
@@ -825,8 +819,7 @@ def probe(
         print("This is where the paratope probing begins")
         if structural_equivalence is False and both_chains is False:
             df["PARATOPE_MATCH"] = [
-                True
-                if check_paratope_equal_len_cdrs(
+                check_paratope_equal_len_cdrs(
                     probe_dict["CDR1"],
                     probe_dict["CDR2"],
                     probe_dict["CDR3"],
@@ -838,8 +831,6 @@ def probe(
                     paratope_len,
                     paratope,
                 )
-                >= paratope_identity_threshold
-                else False
                 for cdr1, cdr2, cdr3, paratope_len, paratope in zip(
                     df["CDR1"],
                     df["CDR2"],
@@ -850,15 +841,12 @@ def probe(
             ]
         else:
             df["PARATOPE_MATCH"] = [
-                True
-                if check_paratope_structural(
+                check_paratope_structural(
                     probe_dict["PARATOPE_LEN"],
                     probe_dict["PARATOPE_DICT_REFORMAT"],
                     paratope_len,
                     paratope,
                 )
-                >= paratope_identity_threshold
-                else False
                 for paratope_len, paratope in zip(
                     df["PARATOPE_LEN"],
                     df["PARATOPE_DICT_REFORMAT"],
@@ -873,11 +861,11 @@ def probe(
 
     df["PREDICTION_SPACE"] = [
         "both"
-        if p_match is True and c_match is True
+        if p_match >= paratope_identity_threshold and c_match >= clonotype_identity_threshold
         else "paratope-only"
-        if p_match is True
+        if p_match >= paratope_identity_threshold
         else "clonotype-only"
-        if c_match is True
+        if c_match >= clonotype_identity_threshold
         else None
         for p_match, c_match in zip(df["PARATOPE_MATCH"], df["CLONOTYPE_MATCH"])
     ]
@@ -890,8 +878,6 @@ def probe(
             "CDR1_NUMBERING",
             "CDR2_NUMBERING",
             "CDR3_NUMBERING",
-            "PARATOPE_MATCH",
-            "CLONOTYPE_MATCH",
             "PARATOPE_PROBS",
             "PARATOPE_PROBS_NUMBERED",
             "PARATOPE_DICT",
