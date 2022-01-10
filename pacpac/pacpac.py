@@ -798,7 +798,7 @@ def probe(
             [df, nan_df3], ignore_index=False, axis=0, sort=False
             )
     else:
-        df["CLONOTYPE_MATCH"] = None
+        df["CLONOTYPE_MATCH"] = 0
 
     if perform_paratyping is True:
 
@@ -857,7 +857,7 @@ def probe(
             [df, nan_df4], ignore_index=False, axis=0, sort=False
             )
     else:
-        df["PARATOPE_MATCH"] = None
+        df["PARATOPE_MATCH"] = 0
 
     df["PREDICTION_SPACE"] = [
         "both"
