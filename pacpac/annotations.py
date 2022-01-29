@@ -1,6 +1,7 @@
 # Author: Aretas Gaspariunas
 
 from typing import List, Dict, Optional, Iterable, Union, Tuple, Any
+from multiprocessing import get_context
 import warnings
 import os
 from contextlib import redirect_stderr
@@ -19,8 +20,18 @@ from pacpac.utils import convert_to_typed_numba_dict, rename_dict_keys
 warnings.filterwarnings("ignore")
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
 
-# init pandarallel
-pandarallel.initialize(verbose=1)
+# finding available CPU count
+context = get_context("fork")
+NB_WORKERS = context.cpu_count()
+
+ANARCI_SPECIES = ['human', 'mouse', 'rat', 'rabbit', 'rhesus', 'pig', 'alpaca']
+
+
+def init_pandarallel(
+    verbose: Optional[int] = 1,
+    nb_workers: Optional[int] = NB_WORKERS
+) -> None:
+    pandarallel.initialize(verbose=verbose, nb_workers=nb_workers)
 
 
 def run_and_parse_anarci(
@@ -86,6 +97,7 @@ def get_sequence_annotations(
         "L": range(89, 98),
     },
     assign_germline: Optional[bool] = True,
+    allowed_species: Optional[List[str]] = None
 ) -> Dict[str, Union[str, int, List[str]]]:
 
     """
@@ -100,7 +112,8 @@ def get_sequence_annotations(
     """
 
     anarci_output = run_and_parse_anarci(
-        sequence, scheme=scheme, allow=allow, assign_germline=assign_germline
+        sequence, scheme=scheme, allow=allow, assign_germline=assign_germline,
+        allowed_species=allowed_species
     )
     numbering = anarci_output["NUMBERING"]  # numbering starts with 1 and not 0
     chain_type = anarci_output["CHAIN_TYPE"]
@@ -152,6 +165,7 @@ def get_annotations(
     scheme: Optional[str] = "chothia",
     cdr_scheme: Optional[str] = "chothia",
     num_extra_residues: Optional[int] = 2,
+    allowed_species: Optional[List[str]] = None
 ) -> Dict[str, str]:
 
     """
@@ -250,6 +264,7 @@ def get_annotations(
         cdr2_scheme=cdr2_scheme,
         cdr3_scheme=cdr3_scheme,
         assign_germline=assign_germline,
+        allowed_species=allowed_species
     )
 
     return annotations
@@ -262,6 +277,7 @@ def annotations_for_df(
     scheme: Optional[str] = "chothia",
     cdr_scheme: Optional[str] = "chothia",
     num_extra_residues: Optional[int] = 2,
+    allowed_species: Optional[List[str]] = None
 ) -> pd.DataFrame:
 
     """
@@ -276,6 +292,7 @@ def annotations_for_df(
                 assign_germline=assign_germline,
                 scheme=scheme,
                 cdr_scheme=cdr_scheme,
+                allowed_species=allowed_species
             )
         except Exception:
             annotations = {
@@ -489,6 +506,7 @@ def annotate_sequence(
     paratope_residue_threshold: Optional[float] = 0.67,
     structural_equivalence: Optional[bool] = True,
     tokenize: Optional[bool] = False,
+    allowed_species: Optional[List[str]] = None
 ) -> Dict[str, Any]:
 
     """
@@ -501,6 +519,7 @@ def annotate_sequence(
         scheme=scheme,
         cdr_scheme=cdr_scheme,
         num_extra_residues=num_extra_residues,
+        allowed_species=allowed_species
     )
     prob_dict = get_paratope_probabilities(annotations)
 

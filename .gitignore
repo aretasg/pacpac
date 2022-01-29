@@ -6,7 +6,7 @@ get_cdrs.py
 .pytest*
 *.ipynb
 *.csv
-!tests/*.csv
+!tests/pertussis_sc_300_head.csv.csv
 *.xlsx
 data/*
 !data/README.md

@@ -10,7 +10,7 @@ from numba import njit
 
 from pacpac.utils import convert_to_typed_numba_dict, rename_dict_keys
 from pacpac.annotations import annotate_sequence, annotations_for_df, \
-    paratopes_for_df_both_chains, tokenize_and_reformat
+    paratopes_for_df_both_chains, tokenize_and_reformat, init_pandarallel, NB_WORKERS
 
 
 @njit(cache=True)
@@ -345,6 +345,8 @@ def cluster(
     perform_clonotyping: Optional[bool] = True,
     perform_paratyping: Optional[bool] = True,
     tokenize: Optional[bool] = False,
+    allowed_species: Optional[List[str]] = None,
+    cpu_count: Optional[int] = NB_WORKERS
 ) -> pd.DataFrame:
 
     """
@@ -382,7 +384,13 @@ def cluster(
     perform_paratyping : bool, default True
         specify if paratyping should be performed.
     tokenize : bool, default False
-        specify if residues should be tokenized when clustering to match residues of the same group.
+        specify if residues should be tokenized to match residues of the same group when paratope clustering.
+    allowed_species : List[str], default None
+        limit the species that can be assigned with ANARCI to a limited set. Useful when the
+        animal species is known or when performing closest germline experiments. Choose a subset of
+        ['human', 'mouse', 'rat', 'rabbit', 'rhesus', 'pig', 'alpaca']. Default is to use all species.
+    cpu_count : int, default - use all available CPU cores
+        specify how many CPU cores should be used for parallelizing processes
 
     Returns
     -------
@@ -417,6 +425,7 @@ def cluster(
         print("Not to worry, we are still flying half a dataset")
 
     print("I'll try annotating, that's a good trick")
+    init_pandarallel(nb_workers=cpu_count)
     df = annotations_for_df(
         df,
         vh_aa_sequence_col_name,
@@ -424,6 +433,7 @@ def cluster(
         scheme=scheme,
         cdr_scheme=cdr_scheme,
         num_extra_residues=num_extra_residues,
+        allowed_species=allowed_species
     )
 
     vl_df = None
@@ -436,6 +446,7 @@ def cluster(
             scheme=scheme,
             cdr_scheme=cdr_scheme,
             num_extra_residues=num_extra_residues,
+            allowed_species=allowed_species
         )
         # exclude sequences where anarci has failed
         nan_df2 = df[df["CDR3"].isnull() | vl_df["CDR3"].isnull()]
@@ -610,6 +621,8 @@ def probe(
     perform_clonotyping: Optional[bool] = True,
     perform_paratyping: Optional[bool] = True,
     tokenize: Optional[bool] = False,
+    allowed_species: Optional[List[str]] = None,
+    cpu_count: Optional[int] = NB_WORKERS
 ) -> pd.DataFrame:
 
     """
@@ -650,7 +663,13 @@ def probe(
     perform_clonotyping : bool, default True
         specify if clonotyping should be performed.
     tokenize : bool, default False
-        specify if residues should be tokenized when probing to match residues of the same group.
+        specify if residues should be tokenized to match residues of the same group when paratope probing.
+    allowed_species : List[str], default None
+        limit the species that can be assigned with ANARCI to a limited set. Useful when the
+        animal species is known or when performing closest germline experiments. Choose a subset of
+        ['human', 'mouse', 'rat', 'rabbit', 'rhesus', 'pig', 'alpaca']. Default is to use all species.
+    cpu_count : int, default - use all available CPU cores
+        specify how many CPU cores should be used for parallelizing processes
 
     Returns
     -------
@@ -675,9 +694,10 @@ def probe(
         cdr_scheme=cdr_scheme,
         assign_germline=perform_clonotyping,
         num_extra_residues=num_extra_residues,
-        paratope_residue_threshold=paratope_identity_threshold,
+        paratope_residue_threshold=paratope_residue_threshold,
         structural_equivalence=structural_equivalence,
-        tokenize=tokenize
+        tokenize=tokenize,
+        allowed_species=allowed_species,
     )
     if both_chains:
         vl_probe_dict = annotate_sequence(
@@ -686,9 +706,10 @@ def probe(
             cdr_scheme=cdr_scheme,
             assign_germline=False,
             num_extra_residues=num_extra_residues,
-            paratope_residue_threshold=paratope_identity_threshold,
+            paratope_residue_threshold=paratope_residue_threshold,
             structural_equivalence=True,
-            tokenize=tokenize
+            tokenize=tokenize,
+            allowed_species=allowed_species
         )
 
         # merge probe dicts
@@ -721,6 +742,7 @@ def probe(
 
     # annotate sequences with genes and cdrs
     print("I'll try annotating, that's a good trick")
+    init_pandarallel(nb_workers=cpu_count)
     df = annotations_for_df(
         df,
         vh_aa_sequence_col_name,
@@ -728,6 +750,7 @@ def probe(
         scheme=scheme,
         cdr_scheme=cdr_scheme,
         num_extra_residues=num_extra_residues,
+        allowed_species=allowed_species
     )
 
     vl_df = None
@@ -740,6 +763,7 @@ def probe(
             scheme=scheme,
             cdr_scheme=cdr_scheme,
             num_extra_residues=num_extra_residues,
+            allowed_species=allowed_species
         )
 
         # exclude sequences where anarci has failed
