@@ -522,6 +522,7 @@ def annotate_sequence(
         allowed_species=allowed_species
     )
     prob_dict = get_paratope_probabilities(annotations)
+    annotations['PARATOPE'] = get_paratope_string(prob_dict, paratope_residue_threshold)
 
     if structural_equivalence is True:
         prob_dict = apply_numbering_scheme_positions(prob_dict, annotations)

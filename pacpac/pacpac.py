@@ -1146,11 +1146,6 @@ def probe_multiple(
         nan_df3 = df[df['HCDR3_LEN'].values <= num_extra_residues * 2]
         df = df[df['HCDR3_LEN'].values > num_extra_residues * 2]
 
-        for index, probe_dict in final_probe_dict.items():
-            probe_cdr3_len = len(probe_dict["CDR3"]) - 2 * num_extra_residues
-            if probe_cdr3_len == 0:
-                raise ValueError("Probe CDR3 length cannot be zero")
-
         print("We're just clonotypes, sir. We're meant to be expendable")
 
         end_cdr = -1 * num_extra_residues
@@ -1158,6 +1153,11 @@ def probe_multiple(
             end_cdr = None
 
         for index, probe_dict in final_probe_dict.items():
+
+            probe_cdr3_len = len(probe_dict["CDR3"]) - 2 * num_extra_residues
+            if probe_cdr3_len == 0:
+                raise ValueError("Probe CDR3 length cannot be zero")
+
             df[f"CLONOTYPE_MATCH_{index}"] = [
                 check_clonotype(
                     probe_dict["V_GENE"],
