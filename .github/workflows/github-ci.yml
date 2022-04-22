@@ -1,9 +1,14 @@
-name: Tests
+name: ci
 
-on: [push]
+on:
+  push
+  pull_request
+  schedule:
+  - cron: "0 0 27 * *"
 
 jobs:
   build-linux:
+  
     runs-on: ubuntu-latest
 
     steps:

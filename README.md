@@ -1,10 +1,10 @@
-# PaCPaC (Paratope and Clonotype Probing and Clustering)
+# PaCPaC
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.4470165.svg)](https://doi.org/10.5281/zenodo.4470165)
 [![License](https://img.shields.io/badge/License-BSD%203--Clause-blue.svg)](https://opensource.org/licenses/BSD-3-Clause)
 [![GitHub Actions (Tests)](https://github.com/aretasg/pacpac/workflows/Tests/badge.svg)](https://github.com/aretasg/pacpac)
 
-Python package to probe and cluster antibody paratopes and clonotypes
+PaCPaC - Paratope and Clonotype Probing and Clustering
 
 ## :hammer_and_wrench: Installation and usage examples (Docker or Conda)
 ### :whale: Docker
@@ -15,7 +15,7 @@ git clone https://github.com/aretasg/pacpac.git
 cd pacpac
 ```
 #### :computer: Example usage with Docker
-Note the `csv_dataset` must be deposited in the `/data` folder.
+Move `csv_dataset` to the `/data` folder
 ```bash
 docker-compose run pacpac cluster <csv_dataset> <vh_amino_acid_sequence_column_name>
 docker-compose run pacpac probe <probe_vh_amino_acid_sequence> <csv_dataset> <vh_amino_acid_sequence_column_name>
@@ -87,7 +87,7 @@ pacpac probe --help
 | Task | Time (s) | Notes |
 | -----------: | ----------------- | :----------: |
 | Annotations using ANARCI | 378 | parallel execution |
-| Paratope prediction using Parapred | 207 | parallel execution without CPU/GPU speed up for TensorFlow |
+| Paratope prediction using Parapred | 207 | batch execution without CPU/GPU speed up for TensorFlow |
 | Clonotype clustering | 13 | on amino acid level |
 | Paratope clustering | 13 | `structural_equivalence=False` |
 | Paratope clustering | 130 | `structural_equivalence=True` |
