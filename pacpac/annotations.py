@@ -292,7 +292,8 @@ def annotations_for_df(
                 assign_germline=assign_germline,
                 scheme=scheme,
                 cdr_scheme=cdr_scheme,
-                allowed_species=allowed_species
+                allowed_species=allowed_species,
+                num_extra_residues=num_extra_residues
             )
         except Exception:
             annotations = {
