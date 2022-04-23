@@ -1164,7 +1164,7 @@ def probe_multiple(
                     jh,
                     cdr3_len,
                     cdr3_aa,
-                )
+                    )
                     for vh, jh, cdr3_len, cdr3_aa in zip(
                         df["V_GENE"],
                         df["J_GENE"],
@@ -1173,7 +1173,7 @@ def probe_multiple(
                     )
                 ]
 
-            df[f"CLONOTYPE_MATCH_{index}"] = df.parallel_apply(
+            df[f"CLONOTYPE_MATCH_{index}"] = df.apply(
                 lambda x: clonotyping(x, probe_dict, probe_cdr3_len, num_extra_residues, end_cdr), 
                 axis=1
                 )
@@ -1221,7 +1221,7 @@ def probe_multiple(
                         df["PARATOPE_LEN"],
                         df["PARATOPE_DICT_REFORMAT"],
                     )
-            ]
+                ]
         else:
             for index, probe_dict in final_probe_dict.items():
                 df[f"PARATOPE_MATCH_{index}"] = [
