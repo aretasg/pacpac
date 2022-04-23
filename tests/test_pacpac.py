@@ -274,7 +274,6 @@ class pacpac_test(unittest.TestCase):
             TEST_DF,
             TEST_VH_COL_NAME,
             TEST_VL_COL_NAME,
-            TEST_VL_AA_SEQ
         )
 
         both_count = len(df.loc[df['PREDICTION_SPACE'] == 'both'])
