@@ -1153,7 +1153,7 @@ def probe_multiple(
             if probe_cdr3_len == 0:
                 raise ValueError("Probe CDR3 length cannot be zero")
 
-            def clonotyping(df, probe_dict, probe_cdr3_len, num_extra_residues, end_cdr):
+            def clonotyping(row, probe_dict, probe_cdr3_len, num_extra_residues, end_cdr):
                 return [
                     check_clonotype(
                     probe_dict["V_GENE"],
@@ -1166,10 +1166,10 @@ def probe_multiple(
                     cdr3_aa,
                     )
                     for vh, jh, cdr3_len, cdr3_aa in zip(
-                        df["V_GENE"],
-                        df["J_GENE"],
-                        (df["HCDR3_LEN"] - 2 * num_extra_residues),
-                        df["CDR3"].str[num_extra_residues:end_cdr]
+                        row["V_GENE"],
+                        row["J_GENE"],
+                        (row["HCDR3_LEN"] - 2 * num_extra_residues),
+                        row["CDR3"][num_extra_residues:end_cdr]
                     )
                 ]
 
