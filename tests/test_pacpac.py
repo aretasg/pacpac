@@ -258,9 +258,9 @@ class pacpac_test(unittest.TestCase):
             structural_equivalence=False,
         )[0]
 
-        both_count = len(df.loc[df['PREDICTION_SPACE'] == 'both'])
-        paratope_only_count = len(df.loc[df['PREDICTION_SPACE'] == 'paratope-only'])
-        clonotype_only_count = len(df.loc[df['PREDICTION_SPACE'] == 'clonotype-only'])
+        both_count = len(df[(df["PARATOPE_MATCH_0"] >= 0.75) & (df["CLONOTYPE_MATCH_0"] >= 0.72)])
+        paratope_only_count = len(df[(df["PARATOPE_MATCH_0"] >= 0.75) & (df["CLONOTYPE_MATCH_0"] < 0.72)])
+        clonotype_only_count = len(df[(df["PARATOPE_MATCH_0"] < 0.75) & (df["CLONOTYPE_MATCH_0"] >= 0.72)])
 
         self.assertIsInstance(df, pd.DataFrame)
         assert both_count == 2
@@ -274,11 +274,11 @@ class pacpac_test(unittest.TestCase):
             TEST_DF,
             TEST_VH_COL_NAME,
             TEST_VL_COL_NAME,
-        )
+        )[0]
 
-        both_count = len(df.loc[df['PREDICTION_SPACE'] == 'both'])
-        paratope_only_count = len(df.loc[df['PREDICTION_SPACE'] == 'paratope-only'])
-        clonotype_only_count = len(df.loc[df['PREDICTION_SPACE'] == 'clonotype-only'])
+        both_count = len(df[(df["PARATOPE_MATCH_0"] >= 0.75) & (df["CLONOTYPE_MATCH_0"] >= 0.72)])
+        paratope_only_count = len(df[(df["PARATOPE_MATCH_0"] >= 0.75) & (df["CLONOTYPE_MATCH_0"] < 0.72)])
+        clonotype_only_count = len(df[(df["PARATOPE_MATCH_0"] < 0.75) & (df["CLONOTYPE_MATCH_0"] >= 0.72)])
 
         self.assertIsInstance(df, pd.DataFrame)
         assert both_count == 2
