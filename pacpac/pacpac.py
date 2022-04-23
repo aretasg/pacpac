@@ -938,8 +938,6 @@ def probe_multiple(
     cdr_scheme: Optional[str] = "chothia",
     num_extra_residues: Optional[int] = 2,
     paratope_residue_threshold: Optional[float] = 0.67,
-    paratope_identity_threshold: Optional[float] = 0.75,
-    clonotype_identity_threshold: Optional[float] = 0.72,
     structural_equivalence: Optional[bool] = True,
     perform_clonotyping: Optional[bool] = True,
     perform_paratyping: Optional[bool] = True,
@@ -955,7 +953,8 @@ def probe_multiple(
     Parameters
     ----------
     probe_df : pd.DataFrame
-        probe sequences.
+        probe sequences. Must contain vh_aa_sequence_col_name columns 
+        and optionally vl_aa_sequence_col_name if probing with both chains.
     df : pd.DataFrame
         pandas dataframe to probe.
     vh_aa_sequence_col_name : str
@@ -973,10 +972,6 @@ def probe_multiple(
         include extra residues at the start and end of each CDR.
     paratope_residue_threshold : float, default 0.67
         paratope residue call threshold for parapred predictions.
-    paratope_identity_threshold : float, default 0.75
-        paratope sequence identity value at which paratope are considered the same.
-    clonotype_identity_threshold : float, default 0.72
-        clonotype sequence identity value at which clonotype are considered the same.
     structural_equivalence : bool, default True
         specify whether structural equivalence as assigned by the numbering scheme of
         choice should be used and paratopes with different CDR lengths to be compared.
@@ -994,7 +989,8 @@ def probe_multiple(
 
     Returns
     -------
-    pd.DataFrame
+    pd.DataFrame, pd.DataFrame
+        Dataframe with probing scores for each probe, dataframe with probe paratopes
     """
 
     status = start_and_checks(scheme, cdr_scheme)
@@ -1080,7 +1076,6 @@ def probe_multiple(
             inplace=True,
             errors="ignore",
     )
-    annotated_probe_df.to_csv('probes_annotated.csv')
 
     # slicing rows where both VH and VL is NaN
     if both_chains:
@@ -1158,8 +1153,9 @@ def probe_multiple(
             if probe_cdr3_len == 0:
                 raise ValueError("Probe CDR3 length cannot be zero")
 
-            df[f"CLONOTYPE_MATCH_{index}"] = [
-                check_clonotype(
+            def clonotyping(df, probe_dict, probe_cdr3_len, num_extra_residues, end_cdr):
+                return [
+                    check_clonotype(
                     probe_dict["V_GENE"],
                     probe_dict["J_GENE"],
                     probe_cdr3_len,
@@ -1169,13 +1165,18 @@ def probe_multiple(
                     cdr3_len,
                     cdr3_aa,
                 )
-                for vh, jh, cdr3_len, cdr3_aa in zip(
-                    df["V_GENE"],
-                    df["J_GENE"],
-                    (df["HCDR3_LEN"] - 2 * num_extra_residues),
-                    df["CDR3"].str[num_extra_residues:end_cdr]
+                    for vh, jh, cdr3_len, cdr3_aa in zip(
+                        df["V_GENE"],
+                        df["J_GENE"],
+                        (df["HCDR3_LEN"] - 2 * num_extra_residues),
+                        df["CDR3"].str[num_extra_residues:end_cdr]
+                    )
+                ]
+
+            df[f"CLONOTYPE_MATCH_{index}"] = df.parallel_apply(
+                lambda x: clonotyping(x, probe_dict, probe_cdr3_len, num_extra_residues, end_cdr), 
+                axis=1
                 )
-            ]
 
         df = pd.concat(
             [df, nan_df3], ignore_index=False, axis=0, sort=False
@@ -1272,4 +1273,4 @@ def probe_multiple(
 
     print("Another happy probing")
 
-    return df
+    return df, annotated_probe_df

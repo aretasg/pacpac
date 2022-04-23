@@ -250,6 +250,43 @@ class pacpac_test(unittest.TestCase):
         assert clonotype_only_count == 0
 
 
+    def test_probing_multiple_ignore_se_false(self):
+        df = pacpac.probe_multiple(
+            pd.DataFrame([TEST_VH_AA_SEQ], columns=[TEST_VH_COL_NAME]),
+            TEST_DF,
+            TEST_VH_COL_NAME,
+            structural_equivalence=False,
+        )[0]
+
+        both_count = len(df.loc[df['PREDICTION_SPACE'] == 'both'])
+        paratope_only_count = len(df.loc[df['PREDICTION_SPACE'] == 'paratope-only'])
+        clonotype_only_count = len(df.loc[df['PREDICTION_SPACE'] == 'clonotype-only'])
+
+        self.assertIsInstance(df, pd.DataFrame)
+        assert both_count == 2
+        assert paratope_only_count == 2
+        assert clonotype_only_count == 0
+
+
+    def test_probing_multiple_both_chains(self):
+        df = pacpac.probe(
+            pd.DataFrame({TEST_VH_COL_NAME: [TEST_VH_AA_SEQ], TEST_VL_COL_NAME: [TEST_VL_AA_SEQ]}),
+            TEST_DF,
+            TEST_VH_COL_NAME,
+            TEST_VL_COL_NAME,
+            TEST_VL_AA_SEQ
+        )
+
+        both_count = len(df.loc[df['PREDICTION_SPACE'] == 'both'])
+        paratope_only_count = len(df.loc[df['PREDICTION_SPACE'] == 'paratope-only'])
+        clonotype_only_count = len(df.loc[df['PREDICTION_SPACE'] == 'clonotype-only'])
+
+        self.assertIsInstance(df, pd.DataFrame)
+        assert both_count == 2
+        assert paratope_only_count == 2
+        assert clonotype_only_count == 0
+
+
 if __name__ == "__main__":
 
     unittest.main()
