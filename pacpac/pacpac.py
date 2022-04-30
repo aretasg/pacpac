@@ -1170,7 +1170,7 @@ def probe_multiple(
             #     axis=1
             #     )
 
-            df[f"CLONOTYPE_MATCH_{index}"] = df.apply(
+            df[f"CLONOTYPE_MATCH_{index}"] = df.parallel_apply(
                 lambda row: check_clonotype(
                     probe_dict["V_GENE"],
                     probe_dict["J_GENE"],

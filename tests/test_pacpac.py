@@ -269,7 +269,7 @@ class pacpac_test(unittest.TestCase):
 
 
     def test_probing_multiple_both_chains(self):
-        df = pacpac.probe(
+        df = pacpac.probe_multiple(
             pd.DataFrame({TEST_VH_COL_NAME: [TEST_VH_AA_SEQ], TEST_VL_COL_NAME: [TEST_VL_AA_SEQ]}),
             TEST_DF,
             TEST_VH_COL_NAME,
