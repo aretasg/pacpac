@@ -1170,7 +1170,7 @@ def probe_multiple(
             #     axis=1
             #     )
 
-            df[f"CLONOTYPE_MATCH_{index}"] = df.parallel_apply(
+            df[f"CLONOTYPE_MATCH_{index}"] = df.apply(
                 lambda row: check_clonotype(
                     probe_dict["V_GENE"],
                     probe_dict["J_GENE"],
@@ -1227,6 +1227,14 @@ def probe_multiple(
                         df["PARATOPE_DICT_REFORMAT"],
                     )
                 ]
+                # df[f"PARATOPE_MATCH_{index}"] = df.parallel_apply(
+                #     lambda row: check_clonotype(
+                #         probe_dict["PARATOPE_LEN"],
+                #         probe_dict["PARATOPE_DICT_REFORMAT"],
+                #         row["PARATOPE_LEN"],
+                #         row["PARATOPE_DICT_REFORMAT"],
+                #         ), axis=1
+                #     )
         else:
             for index, probe_dict in final_probe_dict.items():
                 df[f"PARATOPE_MATCH_{index}"] = [
@@ -1241,6 +1249,14 @@ def probe_multiple(
                         df["PARATOPE_DICT_REFORMAT"],
                     )
                 ]
+                # df[f"PARATOPE_MATCH_{index}"] = df.parallel_apply(
+                #     lambda row: check_paratope_structural(
+                #         probe_dict["PARATOPE_LEN"],
+                #         probe_dict["PARATOPE_DICT_REFORMAT"],
+                #         row["PARATOPE_LEN"],
+                #         row["PARATOPE_DICT_REFORMAT"],
+                #         ), axis=1
+                #     )
 
         df = pd.concat(
             [df, nan_df4], ignore_index=False, axis=0, sort=False
