@@ -25,6 +25,8 @@ jobs:
         auto-activate-base: false
         environment-file: environment.yml
         activate-environment: pacpac
+    - name: install package
+      run: pip install .
     - name: Lint with flake8
       run: |
         conda install flake8
@@ -35,7 +37,6 @@ jobs:
     - name: Test with pytest
       working-directory: ./tests
       run: |
-        pip install .
         pip install pytest
         pytest
 
