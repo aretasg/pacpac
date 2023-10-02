@@ -16,3 +16,4 @@ dependencies:
     - pandarallel==1.5.2
     - pyfiglet==0.8.post1
     - typer==0.3.2
+    - protobuf==3.20
