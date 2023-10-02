@@ -35,6 +35,7 @@ jobs:
     - name: Test with pytest
       working-directory: ./tests
       run: |
+        conda activate pacpac
         pip install pytest
         pytest
 
