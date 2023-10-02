@@ -23,8 +23,8 @@ jobs:
       with:
         miniconda-version: "latest"
         auto-activate-base: false
-        activate-environment: pacpac
         environment-file: environment.yml
+        activate-environment: pacpac
     - name: Lint with flake8
       run: |
         conda install flake8
