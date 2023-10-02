@@ -1,4 +1,4 @@
-FROM frolvlad/alpine-miniconda3 as build
+FROM frolvlad/alpine-miniconda3:python3.7 as build
 
 WORKDIR pacpac
 COPY environment.yml setup.py ./
@@ -14,7 +14,7 @@ ENV PATH /opt/conda/envs/pacpac/bin:$PATH
 RUN pip install .
 
 ########## conda-pack bit to reduce image size
-RUN conda install conda-pack
+RUN conda install conda-pack==0.6.0
 
 # Use conda-pack to create a standalone enviornment in /venv
 RUN conda-pack -n pacpac -o /tmp/env.tar && \
@@ -25,7 +25,7 @@ RUN conda-pack -n pacpac -o /tmp/env.tar && \
 RUN /venv/bin/conda-unpack
 ##########
 
-FROM debian:buster AS runtime
+FROM debian:buster-20230919 AS runtime
 
 # Copy /venv from the previous stage
 COPY --from=build /venv /venv

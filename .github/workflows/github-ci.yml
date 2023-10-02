@@ -12,17 +12,19 @@ jobs:
   build-linux:
   
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash -l {0}
 
     steps:
     - uses: actions/checkout@v2
-    - name: Add conda to system path
-      run: |
-        # $CONDA is an environment variable pointing to the root of the miniconda directory
-        echo $CONDA/bin >> $GITHUB_PATH
-    - name: Install dependencies & package
-      run: |
-        conda env update --file environment.yml --name base
-        pip install .
+    - name: create environment with mamba
+      uses: conda-incubator/setup-miniconda@v2
+      with:
+        miniconda-version: 22.11.1
+        auto-activate-base: false
+        activate-environment: pacpac
+        environment-file: environment.yml
     - name: Lint with flake8
       run: |
         conda install flake8
